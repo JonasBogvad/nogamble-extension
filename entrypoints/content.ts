@@ -392,7 +392,7 @@ export default defineContentScript({
         color: '#4A5C8F',
         fontWeight: '900',
         letterSpacing: '-1px',
-        animation: 'gb-toggle-slide 3s ease-in-out infinite',
+        animation: 'gb-toggle-slide 10s ease-in-out infinite',
       });
       thumb.textContent = '\u23F8'; // ⏸ pause symbol
 
