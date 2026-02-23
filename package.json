@@ -7,11 +7,12 @@
     "build": "wxt build --browser edge",
     "build:chrome": "wxt build --browser chrome",
     "zip": "wxt zip --browser edge",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "prepare": "husky"
   },
-  "dependencies": {},
   "devDependencies": {
-    "wxt": "^0.19.0",
-    "typescript": "^5.0.0"
+    "husky": "^9.1.7",
+    "typescript": "^5.0.0",
+    "wxt": "^0.19.0"
   }
 }

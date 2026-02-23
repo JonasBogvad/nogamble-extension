@@ -1,0 +1,3 @@
+#!/bin/sh
+# Strip Co-Authored-By lines added by AI assistants
+sed -i '/^Co-Authored-By:/d' "$1"
