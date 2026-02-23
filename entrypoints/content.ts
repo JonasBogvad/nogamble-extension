@@ -319,8 +319,17 @@ export default defineContentScript({
       link.addEventListener('mouseenter', () => { link.style.textDecoration = 'underline'; });
       link.addEventListener('mouseleave', () => { link.style.textDecoration = 'none'; });
 
+      const branding = document.createElement('div');
+      branding.textContent = 'Better Twitch TV by Jax Style';
+      Object.assign(branding.style, {
+        marginTop: '6px',
+        fontSize: '10px',
+        color: '#6B6B7A',
+      });
+
       widget.appendChild(label);
       widget.appendChild(link);
+      widget.appendChild(branding);
       firstSection.parentElement.insertBefore(widget, firstSection);
     }
 
