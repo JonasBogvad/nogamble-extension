@@ -329,6 +329,11 @@ export default defineContentScript({
             29%, 82% { left: 30px; }
             93%, 100% { left: 2px; }
           }
+          @keyframes gb-toggle-track {
+            0%, 8%    { background: #2E3D6B; }
+            29%, 82%  { background: #5B72B8; }
+            93%, 100% { background: #2E3D6B; }
+          }
           @keyframes gb-toggle-glow {
             0%, 27%   { box-shadow: none; }
             31%       { box-shadow: 0 0 0 4px rgba(255,255,255,0.28); }
@@ -398,9 +403,10 @@ export default defineContentScript({
         width: '60px',
         height: '32px',
         borderRadius: '16px',
-        background: '#4A5C8F',
+        background: '#2E3D6B',
         position: 'relative',
         flexShrink: '0',
+        animation: 'gb-toggle-track 10s ease-in-out infinite',
       });
 
       const thumb = document.createElement('div');
