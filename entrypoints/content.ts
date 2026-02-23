@@ -231,7 +231,7 @@ export default defineContentScript({
         position: 'absolute',
         bottom: '20px',
         fontSize: '11px',
-        color: '#3D3D3F',
+        color: '#6B6B7A',
         margin: '0',
       });
 
