@@ -427,20 +427,45 @@ export default defineContentScript({
         animation: 'gb-toggle-slide 10s ease-in-out infinite, gb-toggle-glow 10s ease-in-out infinite',
       });
 
-      const playIcon = document.createElement('span');
-      playIcon.textContent = '\u25B6'; // ▶
+      // Play icon — CSS triangle
+      const playIcon = document.createElement('div');
       Object.assign(playIcon.style, {
         position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-40%, -50%)',
+        width: '0',
+        height: '0',
+        borderStyle: 'solid',
+        borderWidth: '5px 0 5px 9px',
+        borderColor: 'transparent transparent transparent #4A5C8F',
         animation: 'gb-icon-play 10s ease-in-out infinite',
       });
 
-      const pauseIcon = document.createElement('span');
-      pauseIcon.textContent = '\u23F8'; // ⏸
+      // Pause icon — two solid bars
+      const pauseIcon = document.createElement('div');
       Object.assign(pauseIcon.style, {
         position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        display: 'flex',
+        gap: '3px',
         opacity: '0',
         animation: 'gb-icon-pause 10s ease-in-out infinite',
       });
+      const bar1 = document.createElement('div');
+      const bar2 = document.createElement('div');
+      [bar1, bar2].forEach((bar) => {
+        Object.assign(bar.style, {
+          width: '4px',
+          height: '11px',
+          background: '#4A5C8F',
+          borderRadius: '1px',
+        });
+      });
+      pauseIcon.appendChild(bar1);
+      pauseIcon.appendChild(bar2);
 
       thumb.appendChild(playIcon);
       thumb.appendChild(pauseIcon);
