@@ -260,9 +260,10 @@ export default defineContentScript({
     }
 
     function hideMiniPlayer(): void {
-      // Twitch's persistent mini player shown when navigating away from a stream
+      // Twitch's mini player shown in bottom-left when navigating away from a stream.
+      // Target only the wrapper, not the main player container.
       const el = document.querySelector<HTMLElement>(
-        '[data-a-target="persistent-player"], .persistent-player, [class*="persistent-player"]'
+        '[data-a-target="persistent-player"]'
       );
       if (el) el.style.setProperty('display', 'none', 'important');
     }
@@ -418,7 +419,6 @@ export default defineContentScript({
       injectSidebarWidget();
       scanSidebar();
       scanCards();
-      hideMiniPlayer();
     }
 
     // ─── SPA navigation detection ──────────────────────────────────────────────
