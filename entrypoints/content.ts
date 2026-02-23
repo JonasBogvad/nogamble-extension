@@ -482,14 +482,19 @@ export default defineContentScript({
 
       document.body.appendChild(widget);
 
-      // Re-parent widget into the fullscreen element so it stays visible
+      // Re-parent widget into the fullscreen element so it stays visible,
+      // and reposition to top-left corner with breathing room.
       document.addEventListener('fullscreenchange', () => {
         const w = document.getElementById('gb-rofus');
         if (!w) return;
         if (document.fullscreenElement) {
           document.fullscreenElement.appendChild(w);
+          w.style.top = '16px';
+          w.style.left = '16px';
         } else {
           document.body.appendChild(w);
+          w.style.top = '120px';
+          w.style.left = '260px';
         }
       });
     }
