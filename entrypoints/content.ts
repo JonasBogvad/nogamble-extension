@@ -11,6 +11,16 @@ export default defineContentScript({
 
     const BLACKLIST = new Set(BLACKLISTED_USERNAMES.map((n) => n.toLowerCase()));
 
+    // ─── Blocked categories ────────────────────────────────────────────────────
+    // Slug (from /directory/category/<slug>) → Danish display name
+    const BLOCKED_CATEGORIES = new Map<string, string>([
+      ['slots', 'Slots'],
+      ['sports-betting', 'Sports Betting'],
+      ['roulette', 'Roulette'],
+      ['blackjack', 'Blackjack'],
+      ['casino', 'Casino'],
+      ['poker', 'Poker'],
+    ]);
 
     // ─── Utilities ─────────────────────────────────────────────────────────────
 
@@ -27,6 +37,12 @@ export default defineContentScript({
       return name;
     }
 
+    /** Extract gambling category slug from an href like "/directory/category/slots" */
+    function extractCategory(href: string): string | null {
+      const match = href.match(/^\/directory\/category\/([^/?]+)/i);
+      return match?.[1] ? decodeURIComponent(match[1]).toLowerCase() : null;
+    }
+
     /** Mark an element as hidden by this extension (idempotent). */
     function hideElement(el: HTMLElement): void {
       if (el.dataset.gbHidden) return;
@@ -35,46 +51,36 @@ export default defineContentScript({
     }
 
     /**
-     * Walk up from a link to find the sidebar channel row container.
-     * Sidebar structure: <div.side-nav-section> > ... > <a href="/channel">
-     * We want the direct child of side-nav-section that wraps this channel row.
+     * Walk up from a sidebar link to find the individual channel row.
+     * Strategy: keep walking up until the parent contains more than one
+     * channel link — at that point we've reached a multi-channel container
+     * and the current element is the single-channel row we want to hide.
      */
     function findSidebarRow(link: HTMLAnchorElement): HTMLElement {
-      let el: HTMLElement | null = link.parentElement;
-      while (el) {
+      let el: HTMLElement = link;
+      while (el.parentElement) {
         const parent = el.parentElement;
-        if (parent?.classList.contains('side-nav-section')) return el;
-        // Safety: stop if we've walked too far
-        if (parent?.tagName.toLowerCase() === 'nav' || parent?.tagName.toLowerCase() === 'aside') break;
+        // Count channel links in parent — early exit once we find more than one
+        let channelCount = 0;
+        for (const a of parent.querySelectorAll<HTMLAnchorElement>('a[href]')) {
+          if (extractChannel(a.getAttribute('href') ?? '') !== null) {
+            channelCount++;
+            if (channelCount > 1) return el; // parent holds multiple channels → el is the row
+          }
+        }
+        // Hard stops
+        if (['nav', 'aside', 'main', 'body'].includes(parent.tagName.toLowerCase())) return el;
         el = parent;
       }
-      // Fallback: 3 levels up
-      let fallback: HTMLElement = link;
-      for (let i = 0; i < 3 && fallback.parentElement; i++) {
-        fallback = fallback.parentElement as HTMLElement;
-      }
-      return fallback;
+      return el;
     }
 
     /**
      * Walk up from a stream card link to find the card container.
-     * Twitch stream cards are wrapped in <article> elements.
+     * Confirmed via DevTools: Twitch wraps every stream card in <article>.
      */
     function findCardContainer(link: HTMLAnchorElement): HTMLElement {
-      let el: HTMLElement | null = link.parentElement;
-      let steps = 0;
-      while (el && steps < 8) {
-        if (el.tagName.toLowerCase() === 'article') return el;
-        if (el.tagName.toLowerCase() === 'main' || el.tagName.toLowerCase() === 'body') break;
-        el = el.parentElement;
-        steps++;
-      }
-      // Fallback: 4 levels up
-      let fallback: HTMLElement = link;
-      for (let i = 0; i < 4 && fallback.parentElement; i++) {
-        fallback = fallback.parentElement as HTMLElement;
-      }
-      return fallback;
+      return link.closest('article') ?? (link.parentElement as HTMLElement) ?? link;
     }
 
     // ─── Channel page overlay ──────────────────────────────────────────────────
@@ -93,7 +99,7 @@ export default defineContentScript({
       }
     }
 
-    function injectOverlay(username: string): void {
+    function injectOverlay(username: string, isCategory = false): void {
       if (overlayInjected) return;
       overlayInjected = true;
 
@@ -131,7 +137,9 @@ export default defineContentScript({
       });
 
       const desc = document.createElement('p');
-      desc.textContent = `${username} er markeret for at reklamere for gambling på stream. At se dette indhold kan udsætte dig for gambling-reklame.`;
+      desc.textContent = isCategory
+        ? `${username} er en gambling-kategori på Twitch. At se dette indhold kan udsætte dig for gambling-reklame.`
+        : `${username} er markeret for at reklamere for gambling på stream. At se dette indhold kan udsætte dig for gambling-reklame.`;
       Object.assign(desc.style, {
         fontSize: '16px',
         maxWidth: '480px',
@@ -295,6 +303,9 @@ export default defineContentScript({
 
     function checkChannelPage(): void {
       const channel = getChannelFromUrl();
+      const categorySlug = extractCategory(window.location.pathname);
+      const categoryName = categorySlug ? BLOCKED_CATEGORIES.get(categorySlug) : undefined;
+
       if (channel && BLACKLIST.has(channel)) {
         const tryInject = () => {
           if (document.body) {
@@ -305,8 +316,44 @@ export default defineContentScript({
           }
         };
         tryInject();
+      } else if (categoryName) {
+        const tryInject = () => {
+          if (document.body) {
+            injectOverlay(categoryName, true);
+            // No ROFUS widget on category pages — only on live streams
+          } else {
+            requestAnimationFrame(tryInject);
+          }
+        };
+        tryInject();
       } else {
         removeOverlay();
+        // ROFUS widget removal is handled by checkStreamCategory in scanAndHide,
+        // which also accounts for streams playing a blocked category.
+      }
+    }
+
+    // ─── Stream category check ─────────────────────────────────────────────────
+    // Shows the ROFUS widget on any live stream currently playing a blocked category
+    // (e.g. a non-blacklisted streamer who happens to be playing Slots).
+    // Called from scanAndHide so it reacts to dynamic DOM updates.
+
+    function checkStreamCategory(): void {
+      const channel = getChannelFromUrl();
+
+      // Not on a channel page — ensure widget is gone
+      if (!channel) { removeRofusWidget(); return; }
+
+      // Blacklisted channel or blocked category URL — checkChannelPage handles it
+      if (BLACKLIST.has(channel)) return;
+      if (BLOCKED_CATEGORIES.has(extractCategory(window.location.pathname) ?? '')) return;
+
+      const gameLink = document.querySelector<HTMLAnchorElement>('[data-a-target="stream-game-link"]');
+      const streamSlug = gameLink ? extractCategory(gameLink.getAttribute('href') ?? '') : null;
+
+      if (streamSlug && BLOCKED_CATEGORIES.has(streamSlug)) {
+        injectRofusWidget();
+      } else {
         removeRofusWidget();
       }
     }
@@ -473,14 +520,87 @@ export default defineContentScript({
       widget.appendChild(topRow);
       widget.appendChild(question);
 
+      // ── Dismiss button (×) ────────────────────────────────────────────────────
+      const ROFUS_COOLDOWN_MS = 5 * 60 * 1000; // 5-minute cooldown before reappearing
+
+      const dismissBtn = document.createElement('button');
+      dismissBtn.textContent = '×';
+      Object.assign(dismissBtn.style, {
+        position: 'absolute',
+        top: '-9px',
+        right: '-9px',
+        width: '20px',
+        height: '20px',
+        borderRadius: '50%',
+        background: '#2E3D6B',
+        border: 'none',
+        color: '#FFFFFF',
+        fontSize: '14px',
+        lineHeight: '20px',
+        textAlign: 'center',
+        cursor: 'pointer',
+        padding: '0',
+        opacity: '0',
+        transition: 'opacity 0.15s',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      });
+      dismissBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        removeRofusWidget();
+        setTimeout(() => {
+          const channel = getChannelFromUrl();
+          if (channel && BLACKLIST.has(channel)) injectRofusWidget();
+        }, ROFUS_COOLDOWN_MS);
+      });
+      widget.appendChild(dismissBtn);
+
       widget.addEventListener('mouseenter', () => {
         widget.style.borderColor = 'rgba(255,255,255,0.18)';
+        dismissBtn.style.opacity = '1';
       });
       widget.addEventListener('mouseleave', () => {
         widget.style.borderColor = 'rgba(255,255,255,0.06)';
+        dismissBtn.style.opacity = '0';
       });
 
       document.body.appendChild(widget);
+
+      // ── Track layout state via stable Twitch button attributes ───────────────
+      // Same pattern for all three states — no DOM measurements needed.
+      const isSidebarCollapsed = (): boolean => {
+        const btn = document.querySelector<HTMLElement>('[data-a-target="side-nav-arrow"]');
+        return btn?.getAttribute('aria-label')?.startsWith('Expand') ?? false;
+      };
+
+      const isTheatreMode = (): boolean =>
+        document.querySelector('button[aria-label^="Exit Theatre Mode"]') !== null;
+
+      const isFullscreen = (): boolean => {
+        const btn = document.querySelector<HTMLElement>('[data-a-target="player-fullscreen-button"]');
+        return btn?.getAttribute('aria-label')?.startsWith('Exit') ?? false;
+      };
+
+      const updateRofusPosition = (): void => {
+        const w = document.getElementById('gb-rofus');
+        if (!w) { clearInterval(rotusPosInterval); return; }
+        if (isFullscreen() || isTheatreMode()) {
+          w.style.top = '46px';
+          w.style.left = '16px';
+        } else if (isSidebarCollapsed()) {
+          w.style.top = '120px';
+          w.style.left = '60px';
+        } else {
+          const section = document.querySelector<HTMLElement>('.side-nav-section');
+          const nav = section?.closest<HTMLElement>('aside, nav') ?? section?.parentElement ?? null;
+          const navWidth = nav ? nav.getBoundingClientRect().width : 240;
+          w.style.top = '120px';
+          w.style.left = `${navWidth + 16}px`;
+        }
+      };
+      const rotusPosInterval = setInterval(updateRofusPosition, 300);
 
       // Re-parent widget into the fullscreen element so it stays visible,
       // and reposition to top-left corner with breathing room.
@@ -554,21 +674,16 @@ export default defineContentScript({
         lineHeight: '1.4',
       });
 
-      const labelEmoji = document.createElement('span');
-      labelEmoji.textContent = '\uD83D\uDEAB';
-      labelEmoji.style.flexShrink = '0';
-
       const labelText = document.createElement('span');
-      labelText.textContent = `${BLACKLIST.size} gambling-streamere blokeret`;
+      labelText.textContent = `${BLACKLIST.size} streamere er skjult for dig`;
 
-      label.appendChild(labelEmoji);
       label.appendChild(labelText);
 
       const link = document.createElement('a');
       link.href = WALL_OF_SHAME_URL;
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
-      link.textContent = 'Se Wall of Shame \u2192';
+      link.textContent = 'Læs mere \u2192';
       Object.assign(link.style, {
         display: 'block',
         marginTop: '3px',
@@ -655,6 +770,27 @@ export default defineContentScript({
       ro.observe(widget);
     }
 
+    // ─── Category tile hiding ──────────────────────────────────────────────────
+    // Hides gambling category tiles on /directory using data-a-target="tw-box-art-card-link".
+    // Confirmed via DevTools: card link parent is the individual tile wrapper.
+
+    const processedCategoryLinks = new WeakSet<HTMLAnchorElement>();
+
+    function scanCategories(): void {
+      const links = document.querySelectorAll<HTMLAnchorElement>(
+        '[data-a-target="tw-box-art-card-link"]'
+      );
+      for (const link of links) {
+        if (processedCategoryLinks.has(link)) continue;
+        processedCategoryLinks.add(link);
+
+        const slug = extractCategory(link.getAttribute('href') ?? '');
+        if (!slug || !BLOCKED_CATEGORIES.has(slug)) continue;
+
+        hideElement((link.parentElement as HTMLElement) ?? link);
+      }
+    }
+
     // ─── Sidebar hiding ────────────────────────────────────────────────────────
     // Targets: channel links inside .side-nav-section (followed channels + recommended)
     // Hides the direct child row of the section, so no empty space is left.
@@ -684,7 +820,7 @@ export default defineContentScript({
 
     function scanCards(): void {
       const links = document.querySelectorAll<HTMLAnchorElement>(
-        '[data-a-target="preview-card-channel-link"], [data-a-target="preview-card-title-link"]'
+        '[data-a-target="preview-card-channel-link"], [data-a-target="preview-card-title-link"], [data-a-target="preview-card-image-link"]'
       );
       for (const link of links) {
         if (processedCardLinks.has(link)) continue;
@@ -701,6 +837,8 @@ export default defineContentScript({
       injectSidebarWidget();
       scanSidebar();
       scanCards();
+      scanCategories();
+      checkStreamCategory();
     }
 
     // ─── SPA navigation detection ──────────────────────────────────────────────
