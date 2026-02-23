@@ -251,6 +251,7 @@ export default defineContentScript({
     // ─── Stream killer ─────────────────────────────────────────────────────────
 
     let streamKillerInterval: ReturnType<typeof setInterval> | null = null;
+    let leftBlockedChannel = false;
 
     function killAllVideos(): void {
       document.querySelectorAll<HTMLVideoElement>('video').forEach((v) => {
@@ -276,12 +277,12 @@ export default defineContentScript({
     }
 
     function stopStreamKiller(): void {
-      if (streamKillerInterval) {
-        clearInterval(streamKillerInterval);
-        streamKillerInterval = null;
-      }
-      // Hide whatever mini player Twitch spawned when we left
-      hideMiniPlayer();
+      if (!streamKillerInterval) return;
+      clearInterval(streamKillerInterval);
+      streamKillerInterval = null;
+      // Mark that we just left a blocked channel so scanAndHide kills the mini player
+      leftBlockedChannel = true;
+      setTimeout(() => { leftBlockedChannel = false; }, 5000);
     }
 
     function checkChannelPage(): void {
@@ -419,6 +420,8 @@ export default defineContentScript({
       injectSidebarWidget();
       scanSidebar();
       scanCards();
+      // Kill mini player only in the window after leaving a blocked channel
+      if (leftBlockedChannel) hideMiniPlayer();
     }
 
     // ─── SPA navigation detection ──────────────────────────────────────────────
