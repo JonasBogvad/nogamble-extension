@@ -413,7 +413,7 @@ export default defineContentScript({
       const question = document.createElement('span');
       question.textContent = 'Spiller du for meget?';
       Object.assign(question.style, {
-        color: '#ADADB8',
+        color: '#FFFFFF',
         fontSize: '11px',
         fontWeight: '500',
       });
