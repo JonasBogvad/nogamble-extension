@@ -490,11 +490,13 @@ export default defineContentScript({
         if (document.fullscreenElement) {
           document.fullscreenElement.appendChild(w);
           w.style.top = '36px';
-          w.style.left = '16px';
+          w.style.left = 'auto';
+          w.style.right = '16px';
         } else {
           document.body.appendChild(w);
           w.style.top = '120px';
           w.style.left = '260px';
+          w.style.right = 'auto';
         }
       });
     }
