@@ -19,29 +19,41 @@ export default defineContentScript({
 
     // ─── Utilities ─────────────────────────────────────────────────────────────
 
-    /** Extract Twitch channel username from an href like "/channelname" or "/channelname/clips" */
+    /** Extract Twitch channel username from an href like "/channelname" */
     function extractChannel(href: string): string | null {
+      // Twitch channel URLs are exactly /channelname (3–25 alphanumeric + underscore)
+      // Ignore paths like /directory, /search, /settings etc.
       const match = href.match(/^\/([a-zA-Z0-9_]{3,25})(\/|$)/);
-      return match ? match[1].toLowerCase() : null;
+      if (!match) return null;
+      const name = match[1].toLowerCase();
+      // Exclude known Twitch non-channel paths
+      const reserved = new Set(['directory', 'search', 'settings', 'subscriptions', 'wallet', 'inventory', 'drops', 'following', 'videos', 'clips', 'collections', 'schedule', 'squad']);
+      if (reserved.has(name)) return null;
+      return name;
     }
 
-    /** Walk up the DOM to find the best container element to hide for a given link.
-     *  Prefers: <article>, <li>, or walks up a fixed number of levels. */
-    function findHideTarget(link: HTMLAnchorElement): HTMLElement {
-      let el: HTMLElement | null = link;
-      let steps = 0;
+    /** Mark an element as hidden by this extension (idempotent). */
+    function hideElement(el: HTMLElement): void {
+      if (el.dataset.gbHidden) return;
+      el.dataset.gbHidden = '1';
+      el.style.setProperty('display', 'none', 'important');
+    }
 
-      while (el && steps < 7) {
-        const tag = el.tagName.toLowerCase();
-        // Prefer semantic card/list containers
-        if (tag === 'article' || tag === 'li') return el;
-        // Stop walking before we eat major layout containers
-        if (tag === 'main' || tag === 'nav' || tag === 'aside' || tag === 'body' || tag === 'html') break;
-        el = el.parentElement;
-        steps++;
+    /**
+     * Walk up from a link to find the sidebar channel row container.
+     * Sidebar structure: <div.side-nav-section> > ... > <a href="/channel">
+     * We want the direct child of side-nav-section that wraps this channel row.
+     */
+    function findSidebarRow(link: HTMLAnchorElement): HTMLElement {
+      let el: HTMLElement | null = link.parentElement;
+      while (el) {
+        const parent = el.parentElement;
+        if (parent?.classList.contains('side-nav-section')) return el;
+        // Safety: stop if we've walked too far
+        if (parent?.tagName.toLowerCase() === 'nav' || parent?.tagName.toLowerCase() === 'aside') break;
+        el = parent;
       }
-
-      // Fallback: 3 levels up from the link (covers sidebar rows)
+      // Fallback: 3 levels up
       let fallback: HTMLElement = link;
       for (let i = 0; i < 3 && fallback.parentElement; i++) {
         fallback = fallback.parentElement as HTMLElement;
@@ -49,11 +61,25 @@ export default defineContentScript({
       return fallback;
     }
 
-    /** Mark an element as hidden by this extension (idempotent). */
-    function hideElement(el: HTMLElement): void {
-      if (el.dataset.gambleblock === 'hidden') return;
-      el.dataset.gambleblock = 'hidden';
-      el.style.setProperty('display', 'none', 'important');
+    /**
+     * Walk up from a stream card link to find the card container.
+     * Twitch stream cards are wrapped in <article> elements.
+     */
+    function findCardContainer(link: HTMLAnchorElement): HTMLElement {
+      let el: HTMLElement | null = link.parentElement;
+      let steps = 0;
+      while (el && steps < 8) {
+        if (el.tagName.toLowerCase() === 'article') return el;
+        if (el.tagName.toLowerCase() === 'main' || el.tagName.toLowerCase() === 'body') break;
+        el = el.parentElement;
+        steps++;
+      }
+      // Fallback: 4 levels up
+      let fallback: HTMLElement = link;
+      for (let i = 0; i < 4 && fallback.parentElement; i++) {
+        fallback = fallback.parentElement as HTMLElement;
+      }
+      return fallback;
     }
 
     // ─── Channel page overlay ──────────────────────────────────────────────────
@@ -65,7 +91,7 @@ export default defineContentScript({
     }
 
     function removeOverlay(): void {
-      const existing = document.getElementById('gambleblock-overlay');
+      const existing = document.getElementById('gb-overlay');
       if (existing) {
         existing.remove();
         overlayInjected = false;
@@ -77,7 +103,7 @@ export default defineContentScript({
       overlayInjected = true;
 
       const overlay = document.createElement('div');
-      overlay.id = 'gambleblock-overlay';
+      overlay.id = 'gb-overlay';
 
       Object.assign(overlay.style, {
         position: 'fixed',
@@ -95,13 +121,11 @@ export default defineContentScript({
         boxSizing: 'border-box',
       });
 
-      // Warning icon
       const icon = document.createElement('div');
       icon.textContent = '⚠️';
       icon.style.fontSize = '64px';
       icon.style.marginBottom = '24px';
 
-      // Headline
       const headline = document.createElement('h1');
       headline.textContent = 'Gambling Content Warning';
       Object.assign(headline.style, {
@@ -111,7 +135,6 @@ export default defineContentScript({
         color: '#FFCA28',
       });
 
-      // Description
       const desc = document.createElement('p');
       desc.textContent = `${username} has been flagged for promoting gambling on stream. Viewing this content may expose you to gambling promotion.`;
       Object.assign(desc.style, {
@@ -122,7 +145,6 @@ export default defineContentScript({
         color: '#ADADB8',
       });
 
-      // Nudge fact
       const nudge = document.createElement('p');
       nudge.textContent = '💡 Did you know? Investing 800 kr/month for 10 years at 7% avg return = ~138,000 kr.';
       Object.assign(nudge.style, {
@@ -136,14 +158,9 @@ export default defineContentScript({
         color: '#ADADB8',
       });
 
-      // Button row
       const buttonRow = document.createElement('div');
-      buttonRow.style.display = 'flex';
-      buttonRow.style.gap = '12px';
-      buttonRow.style.flexWrap = 'wrap';
-      buttonRow.style.justifyContent = 'center';
+      Object.assign(buttonRow.style, { display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' });
 
-      // Go back button
       const backBtn = document.createElement('button');
       backBtn.textContent = '← Go Back';
       Object.assign(backBtn.style, {
@@ -158,7 +175,6 @@ export default defineContentScript({
       });
       backBtn.addEventListener('click', () => history.back());
 
-      // Proceed anyway button (removes overlay for this session)
       const proceedBtn = document.createElement('button');
       proceedBtn.textContent = 'Proceed Anyway';
       Object.assign(proceedBtn.style, {
@@ -177,7 +193,6 @@ export default defineContentScript({
 
       buttonRow.appendChild(backBtn);
       buttonRow.appendChild(proceedBtn);
-
       overlay.appendChild(icon);
       overlay.appendChild(headline);
       overlay.appendChild(desc);
@@ -190,13 +205,9 @@ export default defineContentScript({
     function checkChannelPage(): void {
       const channel = getChannelFromUrl();
       if (channel && BLACKLIST.has(channel)) {
-        // Wait for body to be ready
         const tryInject = () => {
-          if (document.body) {
-            injectOverlay(channel);
-          } else {
-            requestAnimationFrame(tryInject);
-          }
+          if (document.body) injectOverlay(channel);
+          else requestAnimationFrame(tryInject);
         };
         tryInject();
       } else {
@@ -204,24 +215,51 @@ export default defineContentScript({
       }
     }
 
-    // ─── Streamer card / sidebar hiding ────────────────────────────────────────
+    // ─── Sidebar hiding ────────────────────────────────────────────────────────
+    // Targets: channel links inside .side-nav-section (followed channels + recommended)
+    // Hides the direct child row of the section, so no empty space is left.
 
-    /** Cache of already-processed links to avoid repeated DOM walks. */
-    const processedLinks = new WeakSet<HTMLAnchorElement>();
+    const processedSidebarLinks = new WeakSet<HTMLAnchorElement>();
 
-    function scanAndHide(): void {
-      const links = document.querySelectorAll<HTMLAnchorElement>('a[href]');
-
+    function scanSidebar(): void {
+      const links = document.querySelectorAll<HTMLAnchorElement>(
+        '.side-nav-section a[href]'
+      );
       for (const link of links) {
-        if (processedLinks.has(link)) continue;
-        processedLinks.add(link);
+        if (processedSidebarLinks.has(link)) continue;
+        processedSidebarLinks.add(link);
 
         const channel = extractChannel(link.getAttribute('href') ?? '');
         if (!channel || !BLACKLIST.has(channel)) continue;
 
-        const target = findHideTarget(link);
-        hideElement(target);
+        hideElement(findSidebarRow(link));
       }
+    }
+
+    // ─── Stream card hiding ────────────────────────────────────────────────────
+    // Targets: preview card channel/title links using Twitch's stable data-a-target attrs.
+    // Hides the wrapping <article> card so the grid reflows cleanly.
+
+    const processedCardLinks = new WeakSet<HTMLAnchorElement>();
+
+    function scanCards(): void {
+      const links = document.querySelectorAll<HTMLAnchorElement>(
+        '[data-a-target="preview-card-channel-link"], [data-a-target="preview-card-title-link"]'
+      );
+      for (const link of links) {
+        if (processedCardLinks.has(link)) continue;
+        processedCardLinks.add(link);
+
+        const channel = extractChannel(link.getAttribute('href') ?? '');
+        if (!channel || !BLACKLIST.has(channel)) continue;
+
+        hideElement(findCardContainer(link));
+      }
+    }
+
+    function scanAndHide(): void {
+      scanSidebar();
+      scanCards();
     }
 
     // ─── SPA navigation detection ──────────────────────────────────────────────
@@ -233,28 +271,18 @@ export default defineContentScript({
       if (newUrl === lastUrl) return;
       lastUrl = newUrl;
 
-      // Re-check overlay since we're on a new "page"
       overlayInjected = false;
       checkChannelPage();
 
-      // Re-scan after a short delay for the new page's DOM to render
       setTimeout(scanAndHide, 500);
       setTimeout(scanAndHide, 1500);
     }
 
-    // Patch pushState / replaceState for SPA detection
     const originalPushState = history.pushState.bind(history);
     const originalReplaceState = history.replaceState.bind(history);
 
-    history.pushState = (...args) => {
-      originalPushState(...args);
-      onNavigate();
-    };
-    history.replaceState = (...args) => {
-      originalReplaceState(...args);
-      onNavigate();
-    };
-
+    history.pushState = (...args) => { originalPushState(...args); onNavigate(); };
+    history.replaceState = (...args) => { originalReplaceState(...args); onNavigate(); };
     window.addEventListener('popstate', onNavigate);
 
     // ─── MutationObserver ──────────────────────────────────────────────────────
@@ -266,17 +294,12 @@ export default defineContentScript({
       debounceTimer = setTimeout(scanAndHide, 150);
     });
 
-    observer.observe(document.documentElement, {
-      childList: true,
-      subtree: true,
-    });
+    observer.observe(document.documentElement, { childList: true, subtree: true });
 
     // ─── Initial run ───────────────────────────────────────────────────────────
 
     checkChannelPage();
     scanAndHide();
-
-    // Extra scan passes as Twitch loads lazily
     setTimeout(scanAndHide, 1000);
     setTimeout(scanAndHide, 3000);
   },
