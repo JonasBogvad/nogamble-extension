@@ -316,7 +316,7 @@ export default defineContentScript({
       widget.rel = 'noopener noreferrer';
       Object.assign(widget.style, {
         position: 'fixed',
-        top: '60px',
+        top: '120px',
         left: '260px',
         zIndex: '9998',
         display: 'inline-flex',
