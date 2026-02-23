@@ -231,7 +231,25 @@ export default defineContentScript({
       });
       backBtn.addEventListener('click', () => history.back());
 
+      const proceedBtn = document.createElement('button');
+      proceedBtn.textContent = 'Fortsæt Alligevel';
+      Object.assign(proceedBtn.style, {
+        padding: '12px 28px',
+        background: 'transparent',
+        color: '#ADADB8',
+        border: '1px solid #3A3A4A',
+        borderRadius: '6px',
+        fontSize: '15px',
+        fontWeight: '600',
+        cursor: 'pointer',
+      });
+      proceedBtn.addEventListener('click', () => {
+        removeOverlay();
+        stopStreamKiller();
+      });
+
       buttonRow.appendChild(backBtn);
+      buttonRow.appendChild(proceedBtn);
 
       const branding = document.createElement('p');
       branding.textContent = 'Better Twitch TV by Jax Style';
