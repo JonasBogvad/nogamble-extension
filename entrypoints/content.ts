@@ -489,7 +489,7 @@ export default defineContentScript({
         if (!w) return;
         if (document.fullscreenElement) {
           document.fullscreenElement.appendChild(w);
-          w.style.top = '16px';
+          w.style.top = '36px';
           w.style.left = '16px';
         } else {
           document.body.appendChild(w);
