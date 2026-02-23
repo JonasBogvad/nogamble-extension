@@ -169,24 +169,7 @@ export default defineContentScript({
       });
       backBtn.addEventListener('click', () => history.back());
 
-      const proceedBtn = document.createElement('button');
-      proceedBtn.textContent = 'Proceed Anyway';
-      Object.assign(proceedBtn.style, {
-        padding: '12px 28px',
-        background: 'transparent',
-        color: '#ADADB8',
-        border: '1px solid #3D3D3F',
-        borderRadius: '6px',
-        fontSize: '15px',
-        cursor: 'pointer',
-      });
-      proceedBtn.addEventListener('click', () => {
-        overlay.remove();
-        overlayInjected = false;
-      });
-
       buttonRow.appendChild(backBtn);
-      buttonRow.appendChild(proceedBtn);
       overlay.appendChild(icon);
       overlay.appendChild(headline);
       overlay.appendChild(desc);
@@ -207,6 +190,60 @@ export default defineContentScript({
       } else {
         removeOverlay();
       }
+    }
+
+    // ─── Sidebar widget ────────────────────────────────────────────────────────
+    // Small banner injected above the first sidebar section showing blocked count
+    // and linking to the Wall of Shame.
+
+    // Placeholder — replace with real URL when better-twitch-tv-web is deployed
+    const WALL_OF_SHAME_URL = 'https://github.com/JonasBogvad/better-twitch-tv-web';
+
+    function injectSidebarWidget(): void {
+      // Already injected and still in DOM
+      if (document.getElementById('gb-widget')) return;
+
+      const firstSection = document.querySelector('.side-nav-section');
+      if (!firstSection?.parentElement) return;
+
+      const widget = document.createElement('div');
+      widget.id = 'gb-widget';
+      Object.assign(widget.style, {
+        margin: '4px 8px 8px',
+        padding: '8px 10px',
+        borderRadius: '4px',
+        background: 'rgba(145, 71, 255, 0.08)',
+        borderLeft: '3px solid #9147FF',
+        boxSizing: 'border-box',
+      });
+
+      const label = document.createElement('div');
+      label.textContent = `\uD83D\uDEAB ${BLACKLIST.size} gambling streamer${BLACKLIST.size !== 1 ? 's' : ''} blocked`;
+      Object.assign(label.style, {
+        color: '#EFEFF1',
+        fontSize: '12px',
+        fontWeight: '600',
+        lineHeight: '1.4',
+      });
+
+      const link = document.createElement('a');
+      link.href = WALL_OF_SHAME_URL;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = 'View Wall of Shame \u2192';
+      Object.assign(link.style, {
+        display: 'block',
+        marginTop: '3px',
+        color: '#9147FF',
+        fontSize: '11px',
+        textDecoration: 'none',
+      });
+      link.addEventListener('mouseenter', () => { link.style.textDecoration = 'underline'; });
+      link.addEventListener('mouseleave', () => { link.style.textDecoration = 'none'; });
+
+      widget.appendChild(label);
+      widget.appendChild(link);
+      firstSection.parentElement.insertBefore(widget, firstSection);
     }
 
     // ─── Sidebar hiding ────────────────────────────────────────────────────────
@@ -252,6 +289,7 @@ export default defineContentScript({
     }
 
     function scanAndHide(): void {
+      injectSidebarWidget();
       scanSidebar();
       scanCards();
     }
