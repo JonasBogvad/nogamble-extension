@@ -410,30 +410,6 @@ export default defineContentScript({
       topRow.appendChild(title);
       topRow.appendChild(track);
 
-      // ── Bottom row: MitID label + lock ────────────────────────────────────────
-      const bottomRow = document.createElement('div');
-      Object.assign(bottomRow.style, {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '8px',
-      });
-
-      const mitid = document.createElement('span');
-      mitid.textContent = 'Log på ROFUS med MitID';
-      Object.assign(mitid.style, {
-        color: '#F5C842',
-        fontSize: '11px',
-        fontWeight: '500',
-      });
-
-      const lock = document.createElement('span');
-      lock.textContent = '\uD83D\uDD13'; // 🔓 — open lock since it's an invitation to register
-      lock.style.fontSize = '12px';
-
-      bottomRow.appendChild(mitid);
-      bottomRow.appendChild(lock);
-
       const question = document.createElement('span');
       question.textContent = 'Spiller du for meget?';
       Object.assign(question.style, {
@@ -444,7 +420,6 @@ export default defineContentScript({
 
       widget.appendChild(topRow);
       widget.appendChild(question);
-      widget.appendChild(bottomRow);
 
       widget.addEventListener('mouseenter', () => {
         widget.style.borderColor = 'rgba(255,255,255,0.18)';
