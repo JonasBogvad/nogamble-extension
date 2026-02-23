@@ -324,9 +324,9 @@ export default defineContentScript({
         s.textContent = `
           @keyframes gb-toggle-slide {
             0%, 8%   { left: 2px;  animation-timing-function: ease-in; }
-            21%      { left: 30px; animation-timing-function: ease-out; }
-            25%      { left: 23px; animation-timing-function: ease-in-out; }
-            29%, 82% { left: 26px; }
+            21%      { left: 34px; animation-timing-function: ease-out; }
+            25%      { left: 27px; animation-timing-function: ease-in-out; }
+            29%, 82% { left: 30px; }
             93%, 100% { left: 2px; }
           }
           @keyframes gb-toggle-glow {
@@ -395,9 +395,9 @@ export default defineContentScript({
       // Toggle: rounded track with pause-icon thumb on the right
       const track = document.createElement('div');
       Object.assign(track.style, {
-        width: '52px',
-        height: '28px',
-        borderRadius: '14px',
+        width: '60px',
+        height: '32px',
+        borderRadius: '16px',
         background: '#4A5C8F',
         position: 'relative',
         flexShrink: '0',
@@ -408,14 +408,14 @@ export default defineContentScript({
         position: 'absolute',
         left: '2px',    // starts on the left (play position)
         top: '2px',
-        width: '24px',
-        height: '24px',
+        width: '28px',
+        height: '28px',
         borderRadius: '50%',
         background: '#FFFFFF',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: '9px',
+        fontSize: '13px',
         color: '#4A5C8F',
         fontWeight: '900',
         animation: 'gb-toggle-slide 10s ease-in-out infinite, gb-toggle-glow 10s ease-in-out infinite',
