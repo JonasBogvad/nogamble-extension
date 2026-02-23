@@ -139,34 +139,70 @@ export default defineContentScript({
         color: '#ADADB8',
       });
 
+      // Inject keyframe animations once
+      if (!document.getElementById('gb-styles')) {
+        const style = document.createElement('style');
+        style.id = 'gb-styles';
+        style.textContent = `
+          @keyframes gb-pop {
+            0%   { transform: scale(0.5); opacity: 0; }
+            70%  { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1);   opacity: 1; }
+          }
+          @keyframes gb-fade-up {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes gb-glow {
+            0%, 100% { box-shadow: 0 0 12px rgba(255, 202, 40, 0.15); }
+            50%       { box-shadow: 0 0 28px rgba(255, 202, 40, 0.35); }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+
       const nudge = document.createElement('div');
       Object.assign(nudge.style, {
-        maxWidth: '480px',
+        maxWidth: '500px',
         margin: '0 0 40px 0',
-        padding: '16px 20px',
-        background: 'rgba(255, 255, 255, 0.05)',
-        borderRadius: '8px',
+        padding: '24px 28px',
+        background: 'rgba(255, 202, 40, 0.06)',
+        border: '1px solid rgba(255, 202, 40, 0.25)',
+        borderRadius: '12px',
         textAlign: 'center',
+        animation: 'gb-fade-up 0.5s ease 0.3s both, gb-glow 3s ease-in-out 0.8s infinite',
+      });
+
+      const nudgeBulb = document.createElement('div');
+      nudgeBulb.textContent = '💡';
+      Object.assign(nudgeBulb.style, {
+        fontSize: '40px',
+        marginBottom: '12px',
+        display: 'block',
+        animation: 'gb-pop 0.5s ease 0.6s both',
       });
 
       const nudgeHeadline = document.createElement('p');
-      nudgeHeadline.textContent = '💡 Did you know?';
+      nudgeHeadline.textContent = 'Did you know?';
       Object.assign(nudgeHeadline.style, {
-        fontSize: '13px',
+        fontSize: '20px',
         fontWeight: '700',
-        color: '#EFEFF1',
-        margin: '0 0 8px 0',
+        color: '#FFCA28',
+        margin: '0 0 10px 0',
+        letterSpacing: '0.3px',
       });
 
       const nudgeQuote = document.createElement('p');
       nudgeQuote.textContent = 'Investing 800 kr/month for 10 years at 7% avg return = ~138,000 kr.';
       Object.assign(nudgeQuote.style, {
-        fontSize: '14px',
-        lineHeight: '1.6',
-        color: '#ADADB8',
+        fontSize: '18px',
+        lineHeight: '1.7',
+        color: '#EFEFF1',
         margin: '0',
+        fontWeight: '500',
       });
 
+      nudge.appendChild(nudgeBulb);
       nudge.appendChild(nudgeHeadline);
       nudge.appendChild(nudgeQuote);
 
