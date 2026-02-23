@@ -317,7 +317,7 @@ export default defineContentScript({
       Object.assign(widget.style, {
         position: 'fixed',
         top: '60px',
-        left: '8px',
+        left: '260px',
         zIndex: '9998',
         display: 'inline-flex',
         alignItems: 'center',
