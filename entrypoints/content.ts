@@ -289,16 +289,25 @@ export default defineContentScript({
       });
     }
 
+    function removeRofusWidget(): void {
+      document.getElementById('gb-rofus')?.remove();
+    }
+
     function checkChannelPage(): void {
       const channel = getChannelFromUrl();
       if (channel && BLACKLIST.has(channel)) {
         const tryInject = () => {
-          if (document.body) injectOverlay(channel);
-          else requestAnimationFrame(tryInject);
+          if (document.body) {
+            injectOverlay(channel);
+            injectRofusWidget();
+          } else {
+            requestAnimationFrame(tryInject);
+          }
         };
         tryInject();
       } else {
         removeOverlay();
+        removeRofusWidget();
       }
     }
 
@@ -634,7 +643,6 @@ export default defineContentScript({
     }
 
     function scanAndHide(): void {
-      injectRofusWidget();
       injectSidebarWidget();
       scanSidebar();
       scanCards();
