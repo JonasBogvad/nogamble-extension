@@ -146,7 +146,7 @@ export default defineContentScript({
         padding: '16px 20px',
         background: 'rgba(255, 255, 255, 0.05)',
         borderRadius: '8px',
-        textAlign: 'left',
+        textAlign: 'center',
       });
 
       const nudgeHeadline = document.createElement('p');
