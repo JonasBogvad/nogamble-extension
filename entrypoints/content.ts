@@ -309,6 +309,19 @@ export default defineContentScript({
     function injectRofusWidget(): void {
       if (document.getElementById('gb-rofus')) return;
 
+      if (!document.getElementById('gb-rofus-styles')) {
+        const s = document.createElement('style');
+        s.id = 'gb-rofus-styles';
+        s.textContent = `
+          @keyframes gb-toggle-slide {
+            0%,  25% { left: 26px; }
+            45%, 70% { left: 2px; }
+            90%, 100% { left: 26px; }
+          }
+        `;
+        document.head.appendChild(s);
+      }
+
       const widget = document.createElement('a');
       widget.id = 'gb-rofus';
       widget.href = 'https://www.rofus.nu/';
@@ -366,7 +379,7 @@ export default defineContentScript({
       const thumb = document.createElement('div');
       Object.assign(thumb.style, {
         position: 'absolute',
-        right: '2px',
+        left: '26px',   // starts on the right side of the 52px track
         top: '2px',
         width: '24px',
         height: '24px',
@@ -379,6 +392,7 @@ export default defineContentScript({
         color: '#4A5C8F',
         fontWeight: '900',
         letterSpacing: '-1px',
+        animation: 'gb-toggle-slide 3s ease-in-out infinite',
       });
       thumb.textContent = '\u23F8'; // ⏸ pause symbol
 
