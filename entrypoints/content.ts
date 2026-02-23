@@ -481,6 +481,17 @@ export default defineContentScript({
       });
 
       document.body.appendChild(widget);
+
+      // Re-parent widget into the fullscreen element so it stays visible
+      document.addEventListener('fullscreenchange', () => {
+        const w = document.getElementById('gb-rofus');
+        if (!w) return;
+        if (document.fullscreenElement) {
+          document.fullscreenElement.appendChild(w);
+        } else {
+          document.body.appendChild(w);
+        }
+      });
     }
 
     // ─── Sidebar widget ────────────────────────────────────────────────────────
