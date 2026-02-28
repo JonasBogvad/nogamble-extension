@@ -626,8 +626,8 @@ export default defineContentScript({
     // Small banner injected above the first sidebar section showing blocked count
     // and linking to the Wall of Shame.
 
-    // Placeholder — replace with real URL when better-twitch-tv-web is deployed
-    const WALL_OF_SHAME_URL = 'https://github.com/JonasBogvad/better-twitch-tv-web';
+    // Placeholder — replace with real URL when nogamble-web is deployed
+    const WALL_OF_SHAME_URL = 'https://github.com/JonasBogvad/nogamble-web';
 
     function injectSidebarWidget(): void {
       // Already injected and still in DOM
