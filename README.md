@@ -28,8 +28,7 @@
 | Framework | [WXT](https://wxt.dev) v0.19 |
 | Language | TypeScript (strict) |
 | Target | Edge / Chrome (Manifest V3) |
-| Backend (Phase 2) | Next.js on Vercel |
-| Database (Phase 2) | Neon PostgreSQL via Prisma |
+| Blacklist API | [nogamble-web.vercel.app/api/blacklist](https://nogamble-web.vercel.app/api/blacklist) |
 
 ---
 
@@ -38,7 +37,7 @@
 | Phase | Status | Description |
 |---|---|---|
 | 1 – Prototype | ✅ Done | Hardcoded blacklist, hide + overlay + ROFUS widget |
-| 2 – Remote blacklist | Planned | Vercel API + background service worker + admin panel |
+| 2 – Remote blacklist | 🚧 Next | Wire background service worker to live API, ship to store |
 | 3 – Community | Planned | Flag queue, Wall of Shame, nudge messages |
 
 ---
