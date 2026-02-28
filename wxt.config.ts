@@ -3,7 +3,7 @@ import { defineConfig } from 'wxt';
 export default defineConfig({
   extensionApi: 'chrome',
   manifest: {
-    name: 'Better Twitch TV by Jaxstyle',
+    name: 'NoGamble',
     description: 'Hides gambling-promoting streamers from your Twitch experience.',
     version: '0.1.0',
     icons: {

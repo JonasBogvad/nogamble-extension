@@ -260,7 +260,7 @@ export default defineContentScript({
       buttonRow.appendChild(proceedBtn);
 
       const branding = document.createElement('p');
-      branding.textContent = 'Better Twitch TV by Jax Style';
+      branding.textContent = 'NoGamble';
       Object.assign(branding.style, {
         position: 'absolute',
         bottom: '20px',
@@ -695,7 +695,7 @@ export default defineContentScript({
       link.addEventListener('mouseleave', () => { link.style.textDecoration = 'none'; });
 
       const branding = document.createElement('div');
-      branding.textContent = 'Better Twitch TV by Jax Style';
+      branding.textContent = 'NoGamble';
       Object.assign(branding.style, {
         marginTop: '6px',
         fontSize: '10px',

@@ -1,4 +1,4 @@
-# TODO — better-twitch-tv-extension
+# TODO — nogamble-extension
 
 ## Phase 1 – Prototype ✅
 
@@ -23,7 +23,7 @@
 - [x] Warning overlay when navigating directly to `/directory/category/slots` etc.
 - [x] ROFUS widget on any stream currently live in a blocked category (`stream-game-link`)
 - [x] Coverage verified via DevTools: homepage cards (`preview-card-image-link` added), category tiles (`tw-box-art-card-link`), and "Live Channels" sidebar section all caught by existing scanners
-- [ ] Add icons (16px, 48px, 128px) to `public/icons/`
+- [x] Add icons (16px, 48px, 128px) to `public/icons/`
 
 ## Phase 2 – Remote blacklist
 

@@ -1,7 +1,7 @@
 {
-  "name": "better-twitch-tv-by-jaxstyle",
+  "name": "nogamble-extension",
   "version": "0.1.0",
-  "description": "Better Twitch TV by Jaxstyle — hides gambling-promoting streamers from Twitch",
+  "description": "NoGamble — hides gambling-promoting streamers from Twitch",
   "scripts": {
     "dev": "wxt dev --browser edge",
     "build": "wxt build --browser edge",
