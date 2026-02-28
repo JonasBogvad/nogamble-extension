@@ -1,26 +1,33 @@
 export default defineContentScript({
   matches: ['https://www.twitch.tv/*'],
   runAt: 'document_idle',
-  main() {
-    // ─── Hardcoded blacklist (Phase 1 prototype) ───────────────────────────────
-    // Lowercase Twitch usernames. Replace with remote fetch in Phase 2.
-    const BLACKLISTED_USERNAMES: string[] = [
-      'trainwreckstv',
-      'vader',
-    ];
+  async main() {
+    // ─── Remote blacklist (Phase 2) ────────────────────────────────────────────
+    // Fetched from background service worker, cached 15 min in chrome.storage.local
+    let rawList: string[] = [];
+    try {
+      rawList = (await browser.runtime.sendMessage({ type: 'GET_BLACKLIST' })) as string[];
+    } catch {
+      rawList = [];
+    }
 
-    const BLACKLIST = new Set(BLACKLISTED_USERNAMES.map((n) => n.toLowerCase()));
+    const BLACKLIST = new Set(rawList.map((n) => n.toLowerCase()));
 
-    // ─── Blocked categories ────────────────────────────────────────────────────
-    // Slug (from /directory/category/<slug>) → Danish display name
-    const BLOCKED_CATEGORIES = new Map<string, string>([
-      ['slots', 'Slots'],
-      ['sports-betting', 'Sports Betting'],
-      ['roulette', 'Roulette'],
-      ['blackjack', 'Blackjack'],
-      ['casino', 'Casino'],
-      ['poker', 'Poker'],
-    ]);
+    // ─── Remote categories (Phase 2) ───────────────────────────────────────────
+    // Fetched from background service worker, cached 15 min in chrome.storage.local
+    let rawCategories: { slug: string; name: string }[] = [];
+    try {
+      rawCategories = (await browser.runtime.sendMessage({ type: 'GET_CATEGORIES' })) as {
+        slug: string;
+        name: string;
+      }[];
+    } catch {
+      rawCategories = [];
+    }
+
+    const BLOCKED_CATEGORIES = new Map<string, string>(
+      rawCategories.map(({ slug, name }) => [slug.toLowerCase(), name])
+    );
 
     // ─── Utilities ─────────────────────────────────────────────────────────────
 
@@ -626,8 +633,7 @@ export default defineContentScript({
     // Small banner injected above the first sidebar section showing blocked count
     // and linking to the Wall of Shame.
 
-    // Placeholder — replace with real URL when nogamble-web is deployed
-    const WALL_OF_SHAME_URL = 'https://github.com/JonasBogvad/nogamble-web';
+    const WALL_OF_SHAME_URL = 'https://nogamble-web.vercel.app';
 
     function injectSidebarWidget(): void {
       // Already injected and still in DOM

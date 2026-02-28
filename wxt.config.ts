@@ -11,11 +11,12 @@ export default defineConfig({
       48: 'icons/icon-48.png',
       128: 'icons/icon-128.png',
     },
-    permissions: ['declarativeNetRequest'],
+    permissions: ['declarativeNetRequest', 'storage'],
     host_permissions: [
       'https://www.twitch.tv/*',
       'https://usher.ttvnw.net/*',
       'https://usher.twitch.tv/*',
+      'https://nogamble-web.vercel.app/*',
     ],
     declarative_net_request: {
       rule_resources: [{
