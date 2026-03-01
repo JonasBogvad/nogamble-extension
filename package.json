@@ -4,9 +4,10 @@
   "description": "NoGamble — hides gambling-promoting streamers from Twitch",
   "scripts": {
     "dev": "wxt dev --browser edge",
-    "build": "wxt build --browser edge",
-    "build:chrome": "wxt build --browser chrome",
-    "zip": "wxt zip --browser edge",
+    "build": "wxt build --browser chrome",
+    "build:edge": "wxt build --browser edge",
+    "zip": "wxt zip --browser chrome",
+    "zip:edge": "wxt zip --browser edge",
     "type-check": "tsc --noEmit",
     "prepare": "husky"
   },
