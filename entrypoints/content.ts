@@ -633,7 +633,7 @@ export default defineContentScript({
     // Small banner injected above the first sidebar section showing blocked count
     // and linking to the Wall of Shame.
 
-    const WALL_OF_SHAME_URL = 'https://www.nogamblettv.app';
+    const WALL_OF_SHAME_URL = 'https://www.nogamblettv.app/wall';
 
     function injectSidebarWidget(): void {
       // Already injected and still in DOM
