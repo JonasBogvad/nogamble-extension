@@ -1,5 +1,5 @@
 export default defineBackground(() => {
-  const BASE_URL = 'https://nogamble-web.vercel.app/api';
+  const BASE_URL = 'https://www.nogamblettv.app/api';
   const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
   async function fetchBlacklist(): Promise<string[]> {
