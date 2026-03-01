@@ -3,7 +3,7 @@ import { defineConfig } from 'wxt';
 export default defineConfig({
   extensionApi: 'chrome',
   manifest: {
-    name: 'NoGamble',
+    name: 'NoGamble TTV',
     description: 'Hides gambling-promoting streamers from your Twitch experience.',
     version: '0.1.0',
     homepage_url: 'https://nogamble-web.vercel.app',
