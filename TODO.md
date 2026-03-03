@@ -4,37 +4,39 @@
 
 - [x] Extension structure (WXT + TypeScript)
 - [x] Hardcoded blacklist (`trainwreckstv`, `vader`)
-- [x] Hide blacklisted streamers from sidebar
-- [x] Hide blacklisted streamers from browse / stream cards
+- [x] Hide blacklisted streamers from sidebar, browse, homepage
 - [x] Warning overlay on blacklisted channel pages (Danish)
 - [x] SPA navigation detection (URL polling + popstate)
 - [x] Stream muted while overlay is shown, unmuted on proceed
 - [x] "Gå tilbage" + "Fortsæt Alligevel" buttons on overlay
 - [x] 5 rotating Danish nudge quotes on overlay
-- [x] Sidebar widget — blocked count + "Læs mere" link (Danish, no emoji)
-- [x] Sidebar widget responsive to Twitch sidebar collapse
-- [x] ROFUS widget on blocked channel pages only (animated toggle)
-- [x] ROFUS widget dismiss button (hover-only ×, 5-min cooldown before reappearing)
-- [x] ROFUS widget repositions for collapsed sidebar, theatre mode, and fullscreen
-- [x] Layout state detection via stable Twitch button attributes (`data-a-target`, `aria-label`)
-- [x] Fixed sidebar hiding bug — only blacklisted rows hidden, not entire section
-- [x] Simplified card container detection — confirmed `<article>` wrapper via DevTools
-- [x] Hide gambling category tiles on `/directory` (`data-a-target="tw-box-art-card-link"`)
-- [x] Warning overlay when navigating directly to `/directory/category/slots` etc.
-- [x] ROFUS widget on any stream currently live in a blocked category (`stream-game-link`)
-- [x] Coverage verified via DevTools: homepage cards (`preview-card-image-link` added), category tiles (`tw-box-art-card-link`), and "Live Channels" sidebar section all caught by existing scanners
-- [x] Add icons (16px, 48px, 128px) to `public/icons/`
+- [x] ROFUS widget on blocked channel pages (animated toggle, dismissable)
+- [x] ROFUS widget repositions for collapsed sidebar, theatre mode, fullscreen
+- [x] Layout state detection via stable Twitch button attributes
+- [x] Hide gambling category tiles on `/directory`
+- [x] Warning overlay on blocked category pages
+- [x] ROFUS widget on non-blacklisted streams playing a blocked category
+- [x] Icons (16px, 48px, 128px)
 
-## Phase 2 – Remote blacklist
+## Phase 2 – Remote blacklist ✅
 
-- [ ] Add `background.ts` service worker
-- [ ] `background.ts` fetches `GET https://<vercel-app>/api/blacklist` and caches in `chrome.storage.local` with 15-min TTL
-- [ ] Add Vercel domain to `host_permissions` in `wxt.config.ts`
-- [ ] Update `content.ts` to request blacklist from background via `chrome.runtime.sendMessage`
-- [ ] Update Wall of Shame URL in sidebar widget from GitHub placeholder to real Vercel URL
-- [ ] Add "Flag this streamer" button to channel page overlay → POST `/api/flag`
+- [x] `background.ts` service worker fetches and caches blacklist + categories (15-min TTL)
+- [x] `content.ts` requests data from background via `chrome.runtime.sendMessage`
+- [x] API pointed to `www.nogamblettv.app`
+- [x] `host_permissions` covers `nogamblettv.app`
+- [x] Sidebar widget removed (left visible mark — broke no visual trace principle)
+- [x] Fixed black spots on directory pages (card container targeting)
+- [x] Fixed sidebar row hiding (unique channel name detection via Set)
+- [x] ROFUS widget shifted right to avoid sidebar scrollbar overlap
+- [x] Published on Chrome Web Store (v0.1.1)
 
-## Phase 3 – Polish
+## Phase 3 – Community & reach 🚧
 
-- [ ] Prominent unfollow prompt on blocked channel pages
-- [ ] YouTube support
+- [ ] "Is this streamer promoting gambling? Tip us →" link in ROFUS widget
+        shown only on non-blacklisted streams in blocked categories
+        links to `www.nogamblettv.app/#tip?streamer={username}` (pre-fills form)
+        requires tip form to support `?streamer=` query param
+- [ ] Firefox support (addons.mozilla.org)
+        WXT supports Firefox out of the box — mostly namespace polyfill + AMO submission
+        hold until Chrome is stable and audience justifies it
+- [ ] YouTube support (future, separate phase)
