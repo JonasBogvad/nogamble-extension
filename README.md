@@ -21,7 +21,6 @@
 - **Hides** gambling category tiles (Slots, Casino, Roulette, etc.) from the Twitch directory
 - **Overlays** a warning when navigating directly to a blacklisted channel or gambling category page
 - **ROFUS widget** appears on any stream currently live in a blocked gambling category — links to the Danish self-exclusion register
-- **Sidebar widget** shows a count of hidden streamers with a link to the [Wall of Gamblers](https://www.nogamblettv.app/wall)
 - **Mutes** the stream while the warning overlay is shown, unmutes if the user chooses to proceed
 - Responsive to sidebar collapse, theatre mode, and fullscreen
 

@@ -5,7 +5,7 @@ export default defineConfig({
   manifest: {
     name: 'NoGamble TTV',
     description: 'Hides gambling-promoting streamers from your Twitch experience.',
-    version: '0.1.0',
+    version: '0.1.1',
     homepage_url: 'https://www.nogamblettv.app',
     icons: {
       16: 'icons/icon-16.png',

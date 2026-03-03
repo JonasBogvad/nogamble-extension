@@ -67,14 +67,15 @@ export default defineContentScript({
       let el: HTMLElement = link;
       while (el.parentElement) {
         const parent = el.parentElement;
-        // Count channel links in parent — early exit once we find more than one
-        let channelCount = 0;
+        // Count UNIQUE channel names — a single row may have multiple links to the
+        // same channel (thumbnail, name, viewer-count), so we use a Set to avoid
+        // stopping too early and only hiding the <a> instead of the whole row.
+        const uniqueChannels = new Set<string>();
         for (const a of parent.querySelectorAll<HTMLAnchorElement>('a[href]')) {
-          if (extractChannel(a.getAttribute('href') ?? '') !== null) {
-            channelCount++;
-            if (channelCount > 1) return el; // parent holds multiple channels → el is the row
-          }
+          const ch = extractChannel(a.getAttribute('href') ?? '');
+          if (ch) uniqueChannels.add(ch);
         }
+        if (uniqueChannels.size > 1) return el; // parent holds multiple channels → el is the row
         // Hard stops
         if (['nav', 'aside', 'main', 'body'].includes(parent.tagName.toLowerCase())) return el;
         el = parent;
@@ -84,9 +85,14 @@ export default defineContentScript({
 
     /**
      * Walk up from a stream card link to find the card container.
-     * Confirmed via DevTools: Twitch wraps every stream card in <article>.
+     * Twitch directory: the actual grid item is the parent of
+     * [data-target="directory-game__card_container"], which sits several
+     * levels above the <article>. Hiding just the <article> leaves the
+     * outer grid cell as an empty dark box.
      */
     function findCardContainer(link: HTMLAnchorElement): HTMLElement {
+      const cardContainer = link.closest<HTMLElement>('[data-target="directory-game__card_container"]');
+      if (cardContainer?.parentElement) return cardContainer.parentElement as HTMLElement;
       return link.closest('article') ?? (link.parentElement as HTMLElement) ?? link;
     }
 
@@ -416,7 +422,7 @@ export default defineContentScript({
       Object.assign(widget.style, {
         position: 'fixed',
         top: '120px',
-        left: '260px',
+        left: '268px',
         zIndex: '9998',
         display: 'flex',
         flexDirection: 'column',
@@ -604,7 +610,7 @@ export default defineContentScript({
           const nav = section?.closest<HTMLElement>('aside, nav') ?? section?.parentElement ?? null;
           const navWidth = nav ? nav.getBoundingClientRect().width : 240;
           w.style.top = '120px';
-          w.style.left = `${navWidth + 16}px`;
+          w.style.left = `${navWidth + 24}px`;
         }
       };
       const rotusPosInterval = setInterval(updateRofusPosition, 300);
@@ -622,158 +628,11 @@ export default defineContentScript({
         } else {
           document.body.appendChild(w);
           w.style.top = '120px';
-          w.style.left = '260px';
+          w.style.left = '268px';
           w.style.right = 'auto';
 
         }
       });
-    }
-
-    // ─── Sidebar widget ────────────────────────────────────────────────────────
-    // Small banner injected above the first sidebar section showing blocked count
-    // and linking to the Wall of Shame.
-
-    const WALL_OF_SHAME_URL = 'https://www.nogamblettv.app/wall';
-
-    function injectSidebarWidget(): void {
-      // Already injected and still in DOM
-      if (document.getElementById('gb-widget')) return;
-
-      const firstSection = document.querySelector('.side-nav-section');
-      if (!firstSection?.parentElement) return;
-
-      // Inject widget-specific animation if not already present
-      if (!document.getElementById('gb-widget-styles')) {
-        const s = document.createElement('style');
-        s.id = 'gb-widget-styles';
-        s.textContent = `
-          @keyframes gb-dot-blink {
-            0%, 100% { opacity: 1; box-shadow: 0 0 5px rgba(255, 80, 80, 0.7); }
-            50%       { opacity: 0.25; box-shadow: none; }
-          }
-        `;
-        document.head.appendChild(s);
-      }
-
-      const widget = document.createElement('div');
-      widget.id = 'gb-widget';
-      Object.assign(widget.style, {
-        margin: '4px 8px 8px',
-        padding: '8px 10px',
-        borderRadius: '4px',
-        background: 'rgba(145, 71, 255, 0.08)',
-        borderLeft: '3px solid #9147FF',
-        boxSizing: 'border-box',
-      });
-
-      // ── Expanded view (sidebar open) ──────────────────────────────────────────
-      const expandedView = document.createElement('div');
-
-      const label = document.createElement('div');
-      Object.assign(label.style, {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '5px',
-        color: '#EFEFF1',
-        fontSize: '12px',
-        fontWeight: '600',
-        lineHeight: '1.4',
-      });
-
-      const labelText = document.createElement('span');
-      labelText.textContent = `${BLACKLIST.size} streamere er skjult for dig`;
-
-      label.appendChild(labelText);
-
-      const link = document.createElement('a');
-      link.href = WALL_OF_SHAME_URL;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      link.textContent = 'Læs mere \u2192';
-      Object.assign(link.style, {
-        display: 'block',
-        marginTop: '3px',
-        color: '#9147FF',
-        fontSize: '11px',
-        textDecoration: 'none',
-      });
-      link.addEventListener('mouseenter', () => { link.style.textDecoration = 'underline'; });
-      link.addEventListener('mouseleave', () => { link.style.textDecoration = 'none'; });
-
-      const branding = document.createElement('div');
-      branding.textContent = 'NoGamble';
-      Object.assign(branding.style, {
-        marginTop: '6px',
-        fontSize: '10px',
-        color: '#6B6B7A',
-      });
-
-      expandedView.appendChild(label);
-      expandedView.appendChild(link);
-      expandedView.appendChild(branding);
-
-      // ── Compact view (sidebar collapsed) ─────────────────────────────────────
-      const compactView = document.createElement('div');
-      Object.assign(compactView.style, {
-        display: 'none',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '5px',
-      });
-
-      const dot = document.createElement('div');
-      Object.assign(dot.style, {
-        width: '8px',
-        height: '8px',
-        borderRadius: '50%',
-        background: '#FF5050',
-        animation: 'gb-dot-blink 1.6s ease-in-out infinite',
-        flexShrink: '0',
-      });
-
-      const countLabel = document.createElement('div');
-      countLabel.textContent = String(BLACKLIST.size);
-      Object.assign(countLabel.style, {
-        color: '#ADADB8',
-        fontSize: '11px',
-        fontWeight: '700',
-        lineHeight: '1',
-      });
-
-      compactView.appendChild(dot);
-      compactView.appendChild(countLabel);
-
-      widget.appendChild(expandedView);
-      widget.appendChild(compactView);
-      firstSection.parentElement.insertBefore(widget, firstSection);
-
-      // ── Responsive: switch mode when sidebar collapses ────────────────────────
-      // The widget naturally resizes with the sidebar — no class-sniffing needed.
-      const ro = new ResizeObserver((entries) => {
-        const width = entries[0]?.contentRect.width ?? 999;
-        const collapsed = width < 80;
-
-        if (collapsed) {
-          Object.assign(widget.style, {
-            margin: '4px 4px 8px',
-            padding: '6px 4px',
-            borderLeft: 'none',
-            background: 'transparent',
-          });
-          expandedView.style.display = 'none';
-          compactView.style.display = 'flex';
-        } else {
-          Object.assign(widget.style, {
-            margin: '4px 8px 8px',
-            padding: '8px 10px',
-            borderLeft: '3px solid #9147FF',
-            background: 'rgba(145, 71, 255, 0.08)',
-          });
-          expandedView.style.display = 'block';
-          compactView.style.display = 'none';
-        }
-      });
-      ro.observe(widget);
     }
 
     // ─── Category tile hiding ──────────────────────────────────────────────────
@@ -793,7 +652,8 @@ export default defineContentScript({
         const slug = extractCategory(link.getAttribute('href') ?? '');
         if (!slug || !BLOCKED_CATEGORIES.has(slug)) continue;
 
-        hideElement((link.parentElement as HTMLElement) ?? link);
+        const cardContainer = link.closest<HTMLElement>('[data-target="directory-page__card-container"]');
+        hideElement(cardContainer?.parentElement ?? (link.parentElement as HTMLElement) ?? link);
       }
     }
 
@@ -840,7 +700,6 @@ export default defineContentScript({
     }
 
     function scanAndHide(): void {
-      injectSidebarWidget();
       scanSidebar();
       scanCards();
       scanCategories();
