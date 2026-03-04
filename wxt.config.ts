@@ -4,7 +4,7 @@ export default defineConfig({
   extensionApi: 'chrome',
   manifest: {
     name: 'NoGamble TTV',
-    description: 'Hides gambling-promoting streamers from your Twitch experience.',
+    description: 'Hides gambling-promoting streamers and categories from Twitch and Kick. No setup, no account.',
     version: '0.3.0',
     homepage_url: 'https://www.nogamblettv.app',
     icons: {
