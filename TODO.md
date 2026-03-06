@@ -30,16 +30,18 @@
 - [x] ROFUS widget shifted right to avoid sidebar scrollbar overlap
 - [x] Published on Chrome Web Store (v0.1.1)
 
-## Phase 3 – Community & reach 🚧
+## Phase 3 – Community & reach ✅
 
 - [x] Internationalized overlay + widget: 11 languages, 11 self-exclusion registries
         detection via navigator.languages (exact match) → timezone fallback → English + no widget
         translations + registry data extracted to `utils/i18n.ts`
-- [ ] "Is this streamer promoting gambling? Tip us →" link in widget
+- [x] "Is this streamer promoting gambling? Tip us →" link in widget
         shown only on non-blacklisted streams in blocked categories
-        links to `www.nogamblettv.app/#tip?streamer={username}` (pre-fills form)
-        requires tip form to support `?streamer=` query param
-- [ ] Firefox support (addons.mozilla.org)
-        WXT supports Firefox out of the box — mostly namespace polyfill + AMO submission
-        hold until Chrome is stable and audience justifies it
+        links to `www.nogamblettv.app/?u={channel}&p=twitch#tip` (pre-fills form)
+- [x] Firefox support (addons.mozilla.org)
+        `build:firefox` + `zip:firefox` scripts (`--browser firefox --mv3`)
+        gecko ID: `nogamble-ttv@nogamblettv.app`, `strict_min_version: '142.0'`
+        `data_collection_permissions: { required: ['none'], optional: [] }`
+        language-agnostic layout detection (`.side-nav--collapsed`, `[data-a-player-state="theatre"]`, `document.fullscreenElement`, `[data-testid="sidebar-collapse"]` for Kick)
+        submitted to AMO at v0.3.3
 - [ ] YouTube support (future, separate phase)
