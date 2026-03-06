@@ -44,4 +44,21 @@
         `data_collection_permissions: { required: ['none'], optional: [] }`
         language-agnostic layout detection (`.side-nav--collapsed`, `[data-a-player-state="theatre"]`, `document.fullscreenElement`, `[data-testid="sidebar-collapse"]` for Kick)
         submitted to AMO at v0.3.3
-- [ ] YouTube support (future, separate phase)
+## Phase 4 – YouTube support 🚧
+
+- [ ] Add `YOUTUBE` to platform enum in web schema (`BlockedStreamer`, `BlockedCategory`, `FlagReport`)
+- [ ] `GET /api/youtubelist` — public endpoint, YouTube `string[]` (60s cache)
+- [ ] Admin panel YouTube tab (streamers + categories, mirrors Twitch/Kick tab pattern)
+- [ ] Flag form platform toggle includes YouTube
+- [ ] Flag queue platform-aware approve for YouTube flags
+- [ ] `youtube.content.ts` content script (injected into `youtube.com/*`)
+        `background.ts`: add `fetchYouTubeBlacklist()` + `GET_YOUTUBE_BLACKLIST` message
+        `wxt.config.ts`: add `*://*.youtube.com/*` to `host_permissions` + matches
+        `scanYouTubeHomeFeed()` — hides blacklisted channels from homepage grid (`ytd-rich-item-renderer`)
+        `scanYouTubeSearch()` — hides blacklisted channels from search results (`ytd-video-renderer`, `ytd-channel-renderer`)
+        `scanYouTubeSidebar()` — hides blacklisted channels from "Up next" / related videos (`ytd-compact-video-renderer`)
+        `checkYouTubeChannelPage()` — overlay on direct nav to `youtube.com/@handle` or `/channel/`
+        `getYouTubePosition()` — widget positioning (no sidebar collapse state on YouTube)
+- [ ] Channel handle extraction — support `/@handle`, `/channel/UCxxx`, `/c/name` URL patterns
+- [ ] `i18n.ts`: add `reportChannel` link for YouTube (`?u={handle}&p=youtube#tip`)
+- [ ] Submit updated extension to Chrome Web Store, Edge Add-ons, AMO
