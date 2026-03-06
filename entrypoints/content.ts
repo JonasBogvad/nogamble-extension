@@ -73,18 +73,13 @@ export default defineContentScript({
 
     // ─── Twitch widget positioning ─────────────────────────────────────────────
 
-    const isSidebarCollapsed = (): boolean => {
-      const btn = document.querySelector<HTMLElement>('[data-a-target="side-nav-arrow"]');
-      return btn?.getAttribute('aria-label')?.startsWith('Expand') ?? false;
-    };
+    const isSidebarCollapsed = (): boolean =>
+      document.querySelector('.side-nav--collapsed') !== null;
 
     const isTheatreMode = (): boolean =>
-      document.querySelector('button[aria-label^="Exit Theatre Mode"]') !== null;
+      document.querySelector('[data-a-player-state="theatre"]') !== null;
 
-    const isFullscreen = (): boolean => {
-      const btn = document.querySelector<HTMLElement>('[data-a-target="player-fullscreen-button"]');
-      return btn?.getAttribute('aria-label')?.startsWith('Exit') ?? false;
-    };
+    const isFullscreen = (): boolean => !!document.fullscreenElement;
 
     function getTwitchWidgetPosition(): { top: string; left: string } {
       if (isFullscreen() || isTheatreMode()) {
