@@ -224,7 +224,7 @@ export const REGISTRIES: Record<RegistryKey, RegistryData> = {
   RGIAJ:    { name: 'RGIAJ',       url: 'https://www.ordenacionjuego.es/en/rgiaj' },
   ANJ:      { name: 'ANJ',         url: 'https://interdictiondejeux.anj.fr/' },
   RUA:      { name: 'RUA',         url: 'https://www.adm.gov.it/portale/en/autoesclusione-dal-gioco-a-distanza-giochi' },
-  SRIJ:     { name: 'SRIJ',        url: 'https://www.srij.turismodeportugal.pt/' },
+  SRIJ:     { name: 'SRIJ',        url: 'https://www.srij.turismodeportugal.pt/pt/sos-jogadores/autoexclusao-e-proibicao' },
   SELBST:   { name: 'Spielsperre', url: 'https://www.playerprotection.ch/' },
 };
 

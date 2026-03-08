@@ -61,8 +61,8 @@ export default defineContentScript({
       const theatreEl = document.querySelector('[data-theatre="true"]');
       if (theatreEl) return { top: '80px', left: '16px' };
 
-      // Sidebar state: "Collapse sidebar" button exists → sidebar is expanded
-      const expandedBtn = document.querySelector('[aria-label="Collapse sidebar"]');
+      // Sidebar state: data-testid="sidebar-collapse" exists → sidebar is expanded
+      const expandedBtn = document.querySelector('[data-testid="sidebar-collapse"]');
       const leftOffset = expandedBtn ? 256 + 16 : 56 + 16;
       return { top: '80px', left: `${leftOffset}px` };
     }

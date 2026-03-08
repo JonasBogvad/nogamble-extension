@@ -68,7 +68,19 @@ export default defineContentScript({
     function findCardContainer(link: HTMLAnchorElement): HTMLElement {
       const cardContainer = link.closest<HTMLElement>('[data-target="directory-game__card_container"]');
       if (cardContainer?.parentElement) return cardContainer.parentElement as HTMLElement;
-      return link.closest('article') ?? (link.parentElement as HTMLElement) ?? link;
+      // Walk up from article to find the flex grid cell (identified by inline `style="order: X"`)
+      const article = link.closest('article');
+      if (article) {
+        let el: HTMLElement = article;
+        while (el.parentElement) {
+          const parent = el.parentElement as HTMLElement;
+          if (/(^|;)\s*order\s*:/.test(parent.getAttribute('style') ?? '')) return parent;
+          if (['main', 'section', 'ul', 'ol', 'body'].includes(parent.tagName.toLowerCase())) return el;
+          el = parent;
+        }
+        return el;
+      }
+      return (link.parentElement as HTMLElement) ?? link;
     }
 
     // ─── Twitch widget positioning ─────────────────────────────────────────────
