@@ -68,13 +68,27 @@ export default defineContentScript({
     function findCardContainer(link: HTMLAnchorElement): HTMLElement {
       const cardContainer = link.closest<HTMLElement>('[data-target="directory-game__card_container"]');
       if (cardContainer?.parentElement) return cardContainer.parentElement as HTMLElement;
+      // Homepage shelf card — hide the ScTransitionBase (grid slot), not just the inner selector
+      const shelfWrapper = link.closest<HTMLElement>('.shelf-card__impression-wrapper');
+      if (shelfWrapper?.parentElement) return shelfWrapper.parentElement as HTMLElement;
       // Walk up from article to find the flex grid cell (identified by inline `style="order: X"`)
+      // Safety check: the found element must contain only one unique channel — prevents accidentally
+      // grabbing a whole homepage section that also has style="order: N"
       const article = link.closest('article');
       if (article) {
         let el: HTMLElement = article;
         while (el.parentElement) {
           const parent = el.parentElement as HTMLElement;
-          if (/(^|;)\s*order\s*:/.test(parent.getAttribute('style') ?? '')) return parent;
+          if (/(^|;)\s*order\s*:/.test(parent.getAttribute('style') ?? '')) {
+            const uniqueChannels = new Set<string>();
+            for (const a of parent.querySelectorAll<HTMLAnchorElement>('a[href]')) {
+              const ch = extractChannel(a.getAttribute('href') ?? '');
+              if (ch) uniqueChannels.add(ch);
+            }
+            if (uniqueChannels.size <= 1) return parent;
+            // Too many channels — this is a section, not a card cell; fall back to article
+            return article;
+          }
           if (['main', 'section', 'ul', 'ol', 'body'].includes(parent.tagName.toLowerCase())) return el;
           el = parent;
         }
