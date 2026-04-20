@@ -15,7 +15,7 @@
   },
   "devDependencies": {
     "husky": "^9.1.7",
-    "typescript": "^5.0.0",
+    "typescript": "^6.0.3",
     "wxt": "0.20.25"
   },
   "overrides": {
