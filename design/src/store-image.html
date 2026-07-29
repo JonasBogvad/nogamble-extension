@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1280px; height: 800px; overflow: hidden; }
+  body {
+    background: #0d0c10;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    color: #fff;
+    position: relative;
+  }
+  /* Ambient glows */
+  .glow-purple {
+    position: absolute; width: 900px; height: 900px; right: -220px; top: -260px;
+    background: radial-gradient(circle, rgba(145,70,255,0.14) 0%, transparent 62%);
+  }
+  .glow-green {
+    position: absolute; width: 700px; height: 700px; left: -200px; bottom: -300px;
+    background: radial-gradient(circle, rgba(83,252,24,0.06) 0%, transparent 60%);
+  }
+
+  /* ── Left column ─────────────────────────────────────── */
+  .left { position: absolute; left: 64px; top: 88px; width: 400px; }
+  .brand { display: flex; align-items: center; gap: 14px; margin-bottom: 42px; }
+  .brand img { width: 46px; height: 46px; border-radius: 10px; }
+  .brand .name { font-size: 23px; font-weight: 700; letter-spacing: 0.2px; }
+  h1 { font-size: 46px; line-height: 1.13; font-weight: 800; letter-spacing: -0.5px; }
+  h1 .accent { color: #a970ff; }
+  .sub { margin-top: 18px; font-size: 16.5px; line-height: 1.55; color: #b8b4c2; max-width: 380px; }
+  .checks { margin-top: 34px; display: flex; flex-direction: column; gap: 16px; }
+  .check { display: flex; align-items: center; gap: 12px; font-size: 16px; color: #e8e6ee; font-weight: 600; }
+  .check .tick {
+    width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+    background: rgba(83,252,24,0.13); color: #6ff53f;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700;
+  }
+  .check img { width: 19px; height: 19px; border-radius: 4px; margin: 0 1px; vertical-align: -3px; }
+  .browsers { margin-top: 44px; display: flex; gap: 10px; }
+  .bpill {
+    display: flex; align-items: center; gap: 8px;
+    background: #17151c; border: 1px solid #29262f; border-radius: 999px;
+    padding: 8px 16px; font-size: 14px; font-weight: 600; color: #d6d3de;
+  }
+  .bpill img { width: 17px; height: 17px; }
+
+  /* ── Hero overlay card ───────────────────────────────── */
+  .overlay-card {
+    position: absolute; right: 62px; top: 108px; width: 620px; height: 584px;
+    background: linear-gradient(160deg, #17151c 0%, #131118 100%);
+    border: 1px solid #2b2734; border-radius: 20px;
+    box-shadow: 0 40px 90px rgba(0,0,0,0.65);
+    padding: 118px 58px 0; text-align: center;
+    overflow: hidden;
+  }
+  /* faux blurred stream peeking behind the warning */
+  .stream-ghost {
+    position: absolute; inset: 0 0 auto 0; height: 96px;
+    background: linear-gradient(90deg, rgba(145,70,255,0.10), rgba(145,70,255,0.03) 55%, rgba(83,252,24,0.05));
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .stream-ghost .avatar {
+    position: absolute; left: 156px; top: 24px; width: 44px; height: 44px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, rgba(169,112,255,0.45), rgba(169,112,255,0.12));
+    border: 2px solid rgba(235,72,66,0.75);
+  }
+  .stream-ghost .fake-title {
+    position: absolute; left: 214px; top: 30px; width: 190px; height: 13px; border-radius: 7px;
+    background: rgba(255,255,255,0.09);
+  }
+  .stream-ghost .fake-sub {
+    position: absolute; left: 214px; top: 53px; width: 120px; height: 10px; border-radius: 5px;
+    background: rgba(255,255,255,0.055);
+  }
+  .stream-ghost .live {
+    position: absolute; right: 26px; top: 32px;
+    background: rgba(235,72,66,0.9); color: #fff; font-size: 11px; font-weight: 700;
+    padding: 3px 10px; border-radius: 5px; letter-spacing: 1px;
+  }
+  .warn-emoji { font-size: 46px; line-height: 1; }
+  .warn-title { margin-top: 16px; font-size: 27px; font-weight: 700; color: #f5c542; }
+  .warn-body { margin: 14px auto 0; font-size: 15px; line-height: 1.6; color: #b8b4c2; max-width: 430px; }
+  .warn-body b { color: #e8e6ee; }
+  .nudge {
+    margin: 30px auto 0; max-width: 440px;
+    background: #1c1913; border: 1px solid rgba(245,197,66,0.5); border-radius: 14px;
+    box-shadow: 0 0 34px rgba(245,197,66,0.13);
+    padding: 22px 30px;
+  }
+  .nudge .bulb { font-size: 22px; }
+  .nudge .nt { margin-top: 6px; font-size: 15px; font-weight: 700; color: #f5c542; }
+  .nudge .nb { margin-top: 8px; font-size: 14px; line-height: 1.55; color: #d6d3de; }
+  .btns { margin-top: 34px; display: flex; gap: 12px; justify-content: center; }
+  .btn-back {
+    background: #9146FF; color: #fff; font-size: 14.5px; font-weight: 700;
+    border-radius: 8px; padding: 12px 24px;
+  }
+  .btn-proceed {
+    background: #1b1920; border: 1px solid #35313e; color: #b8b4c2;
+    font-size: 14.5px; font-weight: 600; border-radius: 8px; padding: 12px 22px;
+  }
+
+  /* ── Floating fragment: sidebar hidden-count ─────────── */
+  .sidebar-frag {
+    position: absolute; left: 428px; top: 56px; width: 296px;
+    background: #141218; border: 1px solid #2b2734; border-radius: 14px;
+    box-shadow: 0 26px 60px rgba(0,0,0,0.6);
+    padding: 18px 20px 20px; transform: rotate(-2deg); z-index: 3;
+  }
+  .sidebar-frag .head {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 13px; font-weight: 700; color: #8e8a99; letter-spacing: 0.6px;
+    margin-bottom: 13px; text-transform: uppercase;
+  }
+  .sidebar-frag .inner {
+    border-left: 3px solid #9146FF; background: #191622; border-radius: 6px;
+    padding: 13px 16px;
+  }
+  .sidebar-frag .l1 { font-size: 16.5px; font-weight: 700; }
+  .sidebar-frag .l2 { margin-top: 5px; font-size: 13.5px; color: #a970ff; font-weight: 600; }
+  .sidebar-frag .l3 { margin-top: 7px; font-size: 12px; color: #767283; }
+
+  /* ── Floating fragment: self-exclusion widget ────────── */
+  .widget-frag {
+    position: absolute; left: 452px; top: 610px; z-index: 3;
+    background: #131118; border: 1px solid #2b2734; border-radius: 16px;
+    box-shadow: 0 26px 60px rgba(0,0,0,0.6), 0 0 44px rgba(145,70,255,0.18);
+    padding: 18px 24px 17px; transform: rotate(1.6deg); width: 252px;
+  }
+  .widget-frag .row { display: flex; align-items: center; justify-content: space-between; }
+  .widget-frag .reg { font-size: 21px; font-weight: 800; letter-spacing: 0.4px; }
+  .toggle {
+    width: 52px; height: 28px; border-radius: 999px; background: #5f5a92; position: relative;
+  }
+  .toggle .knob {
+    position: absolute; right: 3px; top: 3px; width: 22px; height: 22px; border-radius: 50%;
+    background: #fff; display: flex; align-items: center; justify-content: center;
+    color: #4b4680; font-size: 10px; font-weight: 800;
+  }
+  .widget-frag .q { margin-top: 9px; font-size: 15.5px; font-weight: 600; color: #e8e6ee; }
+
+  /* ── Bottom-right platform tag ───────────────────────── */
+  .platforms {
+    position: absolute; right: 62px; bottom: 46px; display: flex; gap: 10px; align-items: center;
+    font-size: 14px; color: #8e8a99; font-weight: 600;
+  }
+  .platforms .ppill {
+    display: flex; align-items: center; gap: 8px;
+    background: #17151c; border: 1px solid #29262f; border-radius: 999px;
+    padding: 7px 15px; color: #d6d3de;
+  }
+  .platforms img { width: 16px; height: 16px; border-radius: 3px; }
+</style>
+</head>
+<body>
+  <div class="glow-purple"></div>
+  <div class="glow-green"></div>
+
+  <div class="left">
+    <div class="brand">
+      <img src="logo.png" alt="">
+      <div class="name">NoGamble TTV</div>
+    </div>
+    <h1>Hides gambling streamers.<br><span class="accent">Automatically.</span></h1>
+    <p class="sub">Blocks gambling-promoting streamers and categories on Twitch &amp; Kick — with warnings and self-exclusion help when it matters.</p>
+    <div class="checks">
+      <div class="check"><span class="tick">✓</span><span>7,000+ streamers &amp; categories blocked</span></div>
+      <div class="check"><span class="tick">✓</span><span>Works on&nbsp;<img src="twitch-favicon.png" alt="">&nbsp;Twitch and&nbsp;<img src="kick-favicon.png" alt="">&nbsp;Kick</span></div>
+      <div class="check"><span class="tick">✓</span><span>Free · no account · 11 languages</span></div>
+    </div>
+    <div class="browsers">
+      <div class="bpill"><img src="chrome-favicon.png" alt="">Chrome</div>
+      <div class="bpill"><img src="edge-favicon.svg" alt="">Edge</div>
+      <div class="bpill"><img src="firefox-favicon.png" alt="">Firefox</div>
+    </div>
+  </div>
+
+  <div class="overlay-card">
+    <div class="stream-ghost">
+      <div class="avatar"></div>
+      <div class="fake-title"></div>
+      <div class="fake-sub"></div>
+      <div class="live">LIVE</div>
+    </div>
+    <div class="warn-emoji">⚠️</div>
+    <div class="warn-title">Gambling Warning</div>
+    <p class="warn-body"><b>vader</b> has been flagged for promoting gambling on stream. Watching this content may expose you to gambling ads.</p>
+    <div class="nudge">
+      <div class="bulb">💡</div>
+      <div class="nt">Did you know?</div>
+      <div class="nb">The house always wins — gambling sites are designed to take your money over time.</div>
+    </div>
+    <div class="btns">
+      <div class="btn-back">← Go back</div>
+      <div class="btn-proceed">Proceed anyway</div>
+    </div>
+  </div>
+
+  <div class="sidebar-frag">
+    <div class="head"><span>For You</span></div>
+    <div class="inner">
+      <div class="l1">2 streamers hidden for you</div>
+      <div class="l2">Read more →</div>
+      <div class="l3">NoGamble TTV</div>
+    </div>
+  </div>
+
+  <div class="widget-frag">
+    <div class="row">
+      <div class="reg">ROFUS</div>
+      <div class="toggle"><div class="knob">❚❚</div></div>
+    </div>
+    <div class="q">Gambling too much?</div>
+  </div>
+
+  <div class="platforms">nogamblettv.app</div>
+</body>
+</html>

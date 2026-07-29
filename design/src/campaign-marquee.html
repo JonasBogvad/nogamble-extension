@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1400px; height: 560px; overflow: hidden; }
+  body {
+    background: #0d0c10;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    color: #fff; position: relative;
+  }
+  .glow-purple {
+    position: absolute; width: 900px; height: 900px; right: -180px; top: -320px;
+    background: radial-gradient(circle, rgba(145,70,255,0.16) 0%, transparent 62%);
+  }
+  .glow-green {
+    position: absolute; width: 700px; height: 700px; left: -240px; bottom: -340px;
+    background: radial-gradient(circle, rgba(83,252,24,0.06) 0%, transparent 60%);
+  }
+
+  .left { position: absolute; left: 90px; top: 96px; width: 560px; }
+  .brand { display: flex; align-items: center; gap: 14px; margin-bottom: 30px; }
+  .brand img { width: 46px; height: 46px; border-radius: 10px; }
+  .brand .name { font-size: 23px; font-weight: 700; }
+  h1 { font-size: 52px; line-height: 1.12; font-weight: 800; letter-spacing: -0.6px; }
+  h1 .accent { color: #a970ff; }
+  .sub { margin-top: 16px; font-size: 18px; line-height: 1.5; color: #b8b4c2; max-width: 520px; }
+  .sub b { color: #e8e6ee; }
+  .pills { margin-top: 30px; display: flex; gap: 10px; }
+  .pill {
+    display: flex; align-items: center; gap: 8px;
+    background: #17151c; border: 1px solid #2b2734; border-radius: 999px;
+    padding: 9px 17px; font-size: 14.5px; font-weight: 700; color: #d6d3de;
+  }
+  .pill img { width: 17px; height: 17px; border-radius: 3px; }
+  .pill.free { color: #6ff53f; border-color: rgba(83,252,24,0.25); }
+
+  /* Overlay mini-card */
+  .card {
+    position: absolute; right: 96px; top: 62px; width: 500px; height: 436px;
+    background: linear-gradient(160deg, #17151c 0%, #131118 100%);
+    border: 1px solid #2b2734; border-radius: 18px;
+    box-shadow: 0 34px 80px rgba(0,0,0,0.65);
+    padding: 44px 44px 0; text-align: center;
+  }
+  .warn-emoji { font-size: 36px; line-height: 1; }
+  .warn-title { margin-top: 11px; font-size: 22px; font-weight: 700; color: #f5c542; }
+  .warn-body { margin: 10px auto 0; font-size: 13.5px; line-height: 1.55; color: #b8b4c2; max-width: 360px; }
+  .warn-body b { color: #e8e6ee; }
+  .nudge {
+    margin: 20px auto 0; max-width: 370px;
+    background: #1c1913; border: 1px solid rgba(245,197,66,0.5); border-radius: 12px;
+    box-shadow: 0 0 28px rgba(245,197,66,0.12);
+    padding: 15px 22px;
+  }
+  .nudge .nt { font-size: 13.5px; font-weight: 700; color: #f5c542; }
+  .nudge .nb { margin-top: 6px; font-size: 12.5px; line-height: 1.5; color: #d6d3de; }
+  .btns { margin-top: 22px; display: flex; gap: 10px; justify-content: center; }
+  .btn-back { background: #9146FF; color: #fff; font-size: 13px; font-weight: 700; border-radius: 7px; padding: 10px 20px; }
+  .btn-proceed { background: #1b1920; border: 1px solid #35313e; color: #b8b4c2; font-size: 13px; font-weight: 600; border-radius: 7px; padding: 10px 18px; }
+
+  /* Widget pill overlapping card */
+  .widget {
+    position: absolute; right: 508px; top: 420px; z-index: 3;
+    background: #131118; border: 1px solid #2b2734; border-radius: 14px;
+    box-shadow: 0 22px 50px rgba(0,0,0,0.6), 0 0 38px rgba(145,70,255,0.2);
+    padding: 14px 20px 13px; transform: rotate(-2deg); width: 208px;
+  }
+  .widget .row { display: flex; align-items: center; justify-content: space-between; }
+  .widget .reg { font-size: 18px; font-weight: 800; }
+  .toggle { width: 44px; height: 24px; border-radius: 999px; background: #5f5a92; position: relative; }
+  .toggle .knob {
+    position: absolute; right: 3px; top: 3px; width: 18px; height: 18px; border-radius: 50%;
+    background: #fff;
+  }
+  .widget .q { margin-top: 7px; font-size: 13.5px; font-weight: 600; color: #e8e6ee; }
+
+  /* Hidden-streamers chip top-left of card */
+  .chip {
+    position: absolute; right: 520px; top: 66px; z-index: 3;
+    background: #141218; border: 1px solid #2b2734; border-left: 3px solid #9146FF;
+    border-radius: 10px; box-shadow: 0 22px 50px rgba(0,0,0,0.6);
+    padding: 13px 18px; transform: rotate(2deg);
+  }
+  .chip .l1 { font-size: 14.5px; font-weight: 700; }
+  .chip .l2 { margin-top: 3px; font-size: 12px; color: #a970ff; font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="glow-purple"></div>
+  <div class="glow-green"></div>
+
+  <div class="left">
+    <div class="brand">
+      <img src="logo.png" alt="">
+      <div class="name">NoGamble TTV</div>
+    </div>
+    <h1>Hides gambling streamers. <span class="accent">Automatically.</span></h1>
+    <p class="sub"><b>7,000+</b> gambling-promoting streamers and categories blocked on Twitch &amp; Kick.</p>
+    <div class="pills">
+      <div class="pill"><img src="twitch-favicon.png" alt="">Twitch</div>
+      <div class="pill"><img src="kick-favicon.png" alt="">Kick</div>
+      <div class="pill free">Free · No account</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="warn-emoji">⚠️</div>
+    <div class="warn-title">Gambling Warning</div>
+    <p class="warn-body"><b>vader</b> has been flagged for promoting gambling on stream. Watching may expose you to gambling ads.</p>
+    <div class="nudge">
+      <div class="nt">💡 Did you know?</div>
+      <div class="nb">The house always wins — gambling sites are designed to take your money over time.</div>
+    </div>
+    <div class="btns">
+      <div class="btn-back">← Go back</div>
+      <div class="btn-proceed">Proceed anyway</div>
+    </div>
+  </div>
+
+  <div class="chip">
+    <div class="l1">2 streamers hidden for you</div>
+    <div class="l2">NoGamble TTV</div>
+  </div>
+
+  <div class="widget">
+    <div class="row">
+      <div class="reg">ROFUS</div>
+      <div class="toggle"><div class="knob"></div></div>
+    </div>
+    <div class="q">Gambling too much?</div>
+  </div>
+</body>
+</html>

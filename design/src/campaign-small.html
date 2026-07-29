@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 440px; height: 280px; overflow: hidden; }
+  body {
+    background: #0d0c10;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    color: #fff; position: relative;
+  }
+  .glow-purple {
+    position: absolute; width: 420px; height: 420px; right: -120px; top: -140px;
+    background: radial-gradient(circle, rgba(145,70,255,0.22) 0%, transparent 62%);
+  }
+  .glow-green {
+    position: absolute; width: 340px; height: 340px; left: -110px; bottom: -150px;
+    background: radial-gradient(circle, rgba(83,252,24,0.09) 0%, transparent 60%);
+  }
+  .wrap {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 14px;
+  }
+  .logo { width: 92px; height: 92px; border-radius: 20px; filter: drop-shadow(0 10px 30px rgba(145,70,255,0.35)); }
+  .name { font-size: 31px; font-weight: 800; letter-spacing: -0.3px; }
+  .tag { font-size: 14.5px; color: #b8b4c2; font-weight: 600; }
+  .pills { display: flex; gap: 8px; margin-top: 2px; }
+  .pill {
+    display: flex; align-items: center; gap: 7px;
+    background: #17151c; border: 1px solid #2b2734; border-radius: 999px;
+    padding: 6px 13px; font-size: 12.5px; font-weight: 700; color: #d6d3de;
+  }
+  .pill img { width: 15px; height: 15px; border-radius: 3px; }
+</style>
+</head>
+<body>
+  <div class="glow-purple"></div>
+  <div class="glow-green"></div>
+  <div class="wrap">
+    <img class="logo" src="logo.png" alt="">
+    <div class="name">NoGamble TTV</div>
+    <div class="tag">Hides gambling streamers</div>
+    <div class="pills">
+      <div class="pill"><img src="twitch-favicon.png" alt="">Twitch</div>
+      <div class="pill"><img src="kick-favicon.png" alt="">Kick</div>
+    </div>
+  </div>
+</body>
+</html>
