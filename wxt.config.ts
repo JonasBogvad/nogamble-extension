@@ -1,7 +1,6 @@
 import { defineConfig } from 'wxt';
 
 export default defineConfig({
-  extensionApi: 'chrome',
   manifest: {
     name: 'NoGamble TTV',
     description: 'Hides gambling-promoting streamers and categories from Twitch and Kick. No setup, no account.',

@@ -59,7 +59,7 @@ export default defineBackground(() => {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const list = (await res.json()) as unknown[];
       if (!Array.isArray(list)) throw new Error('Unexpected response shape');
-      await chrome.storage.local.set({
+      await browser.storage.local.set({
         [cfg.dataKey]: list,
         [cfg.tsKey]: Date.now(),
         [cfg.ttlKey]: parseServerTtl(res),
@@ -74,7 +74,7 @@ export default defineBackground(() => {
   // off a background refresh once it is older than the TTL. Only block on the
   // network when there is no cache at all (first run after install).
   async function getList(cfg: ListConfig): Promise<unknown[]> {
-    const stored = await chrome.storage.local.get([cfg.dataKey, cfg.tsKey, cfg.ttlKey]);
+    const stored = await browser.storage.local.get([cfg.dataKey, cfg.tsKey, cfg.ttlKey]);
     const cached = Array.isArray(stored[cfg.dataKey]) ? (stored[cfg.dataKey] as unknown[]) : null;
     if (cached) {
       const fetchedAt = typeof stored[cfg.tsKey] === 'number' ? (stored[cfg.tsKey] as number) : 0;
