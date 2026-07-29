@@ -3,13 +3,13 @@ export {}
 declare global {
   const ContentScriptContext: typeof import('wxt/client')['ContentScriptContext']
   const InvalidMatchPattern: typeof import('wxt/sandbox')['InvalidMatchPattern']
-  const LANGUAGE_MAP: typeof import('C:/Github/Better Twitch TV by Jaxstyle/extension/utils/i18n')['LANGUAGE_MAP']
-  const LOCALES: typeof import('C:/Github/Better Twitch TV by Jaxstyle/extension/utils/i18n')['LOCALES']
+  const LANGUAGE_MAP: typeof import('C:/Github/Projects/Better Twitch TV by Jaxstyle/extension/utils/i18n')['LANGUAGE_MAP']
+  const LOCALES: typeof import('C:/Github/Projects/Better Twitch TV by Jaxstyle/extension/utils/i18n')['LOCALES']
   const MatchPattern: typeof import('wxt/sandbox')['MatchPattern']
   const MigrationError: typeof import('wxt/storage')['MigrationError']
-  const REGISTRIES: typeof import('C:/Github/Better Twitch TV by Jaxstyle/extension/utils/i18n')['REGISTRIES']
-  const RESERVED_PATHS: typeof import('C:/Github/Better Twitch TV by Jaxstyle/extension/utils/dom')['RESERVED_PATHS']
-  const TIMEZONE_MAP: typeof import('C:/Github/Better Twitch TV by Jaxstyle/extension/utils/i18n')['TIMEZONE_MAP']
+  const REGISTRIES: typeof import('C:/Github/Projects/Better Twitch TV by Jaxstyle/extension/utils/i18n')['REGISTRIES']
+  const RESERVED_PATHS: typeof import('C:/Github/Projects/Better Twitch TV by Jaxstyle/extension/utils/dom')['RESERVED_PATHS']
+  const TIMEZONE_MAP: typeof import('C:/Github/Projects/Better Twitch TV by Jaxstyle/extension/utils/i18n')['TIMEZONE_MAP']
   const browser: typeof import('wxt/browser/chrome')['browser']
   const createIframeUi: typeof import('wxt/client')['createIframeUi']
   const createIntegratedUi: typeof import('wxt/client')['createIntegratedUi']
@@ -20,23 +20,23 @@ declare global {
   const defineContentScript: typeof import('wxt/sandbox')['defineContentScript']
   const defineUnlistedScript: typeof import('wxt/sandbox')['defineUnlistedScript']
   const defineWxtPlugin: typeof import('wxt/sandbox')['defineWxtPlugin']
-  const detectLocaleAndRegistry: typeof import('C:/Github/Better Twitch TV by Jaxstyle/extension/utils/i18n')['detectLocaleAndRegistry']
-  const extractChannel: typeof import('C:/Github/Better Twitch TV by Jaxstyle/extension/utils/dom')['extractChannel']
+  const detectLocaleAndRegistry: typeof import('C:/Github/Projects/Better Twitch TV by Jaxstyle/extension/utils/i18n')['detectLocaleAndRegistry']
+  const extractChannel: typeof import('C:/Github/Projects/Better Twitch TV by Jaxstyle/extension/utils/dom')['extractChannel']
   const fakeBrowser: typeof import('wxt/testing')['fakeBrowser']
-  const hideElement: typeof import('C:/Github/Better Twitch TV by Jaxstyle/extension/utils/dom')['hideElement']
-  const injectOverlay: typeof import('C:/Github/Better Twitch TV by Jaxstyle/extension/utils/overlay')['injectOverlay']
+  const hideElement: typeof import('C:/Github/Projects/Better Twitch TV by Jaxstyle/extension/utils/dom')['hideElement']
+  const injectOverlay: typeof import('C:/Github/Projects/Better Twitch TV by Jaxstyle/extension/utils/overlay')['injectOverlay']
   const injectScript: typeof import('wxt/client')['injectScript']
-  const injectWidget: typeof import('C:/Github/Better Twitch TV by Jaxstyle/extension/utils/widget')['injectWidget']
-  const muteStream: typeof import('C:/Github/Better Twitch TV by Jaxstyle/extension/utils/overlay')['muteStream']
-  const removeOverlay: typeof import('C:/Github/Better Twitch TV by Jaxstyle/extension/utils/overlay')['removeOverlay']
-  const removeWidget: typeof import('C:/Github/Better Twitch TV by Jaxstyle/extension/utils/widget')['removeWidget']
+  const injectWidget: typeof import('C:/Github/Projects/Better Twitch TV by Jaxstyle/extension/utils/widget')['injectWidget']
+  const muteStream: typeof import('C:/Github/Projects/Better Twitch TV by Jaxstyle/extension/utils/overlay')['muteStream']
+  const removeOverlay: typeof import('C:/Github/Projects/Better Twitch TV by Jaxstyle/extension/utils/overlay')['removeOverlay']
+  const removeWidget: typeof import('C:/Github/Projects/Better Twitch TV by Jaxstyle/extension/utils/widget')['removeWidget']
   const storage: typeof import('wxt/storage')['storage']
-  const unmuteStream: typeof import('C:/Github/Better Twitch TV by Jaxstyle/extension/utils/overlay')['unmuteStream']
+  const unmuteStream: typeof import('C:/Github/Projects/Better Twitch TV by Jaxstyle/extension/utils/overlay')['unmuteStream']
   const useAppConfig: typeof import('wxt/client')['useAppConfig']
 }
 // for type re-export
 declare global {
   // @ts-ignore
-  export type { LocaleKey, RegistryKey, LocaleData, RegistryData } from 'C:/Github/Better Twitch TV by Jaxstyle/extension/utils/i18n'
-  import('C:/Github/Better Twitch TV by Jaxstyle/extension/utils/i18n')
+  export type { LocaleKey, RegistryKey, LocaleData, RegistryData } from 'C:/Github/Projects/Better Twitch TV by Jaxstyle/extension/utils/i18n'
+  import('C:/Github/Projects/Better Twitch TV by Jaxstyle/extension/utils/i18n')
 }

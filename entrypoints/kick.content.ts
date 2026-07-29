@@ -7,28 +7,32 @@ export default defineContentScript({
   matches: ['https://kick.com/*'],
   runAt: 'document_idle',
   async main() {
-    // ─── Remote Kick blacklist ─────────────────────────────────────────────────
-    let rawKickList: string[] = [];
-    try {
-      rawKickList = (await browser.runtime.sendMessage({ type: 'GET_KICK_BLACKLIST' })) as string[];
-    } catch {
-      rawKickList = [];
-    }
-    const KICK_BLACKLIST = new Set(rawKickList.map((n) => n.toLowerCase()));
+    // ─── Remote Kick blacklist + categories ────────────────────────────────────
+    // Loaded once at start, re-requested on SPA navigation. The background
+    // worker answers from its cache instantly and refreshes over the network
+    // only when the server-driven TTL has expired.
+    let KICK_BLACKLIST = new Set<string>();
+    let BLOCKED_CATEGORIES = new Map<string, string>();
 
-    // ─── Remote Kick categories ────────────────────────────────────────────────
-    let rawCategories: { slug: string; name: string }[] = [];
-    try {
-      rawCategories = (await browser.runtime.sendMessage({ type: 'GET_KICK_CATEGORIES' })) as {
-        slug: string;
-        name: string;
-      }[];
-    } catch {
-      rawCategories = [];
+    async function loadLists(): Promise<void> {
+      try {
+        const rawKickList = (await browser.runtime.sendMessage({ type: 'GET_KICK_BLACKLIST' })) as string[];
+        KICK_BLACKLIST = new Set(rawKickList.map((n) => n.toLowerCase()));
+      } catch {
+        // Keep the previous list on failure
+      }
+      try {
+        const rawCategories = (await browser.runtime.sendMessage({ type: 'GET_KICK_CATEGORIES' })) as {
+          slug: string;
+          name: string;
+        }[];
+        BLOCKED_CATEGORIES = new Map(rawCategories.map(({ slug, name }) => [slug.toLowerCase(), name]));
+      } catch {
+        // Keep the previous map on failure
+      }
     }
-    const BLOCKED_CATEGORIES = new Map<string, string>(
-      rawCategories.map(({ slug, name }) => [slug.toLowerCase(), name])
-    );
+
+    await loadLists();
 
     // ─── Locale + registry detection ───────────────────────────────────────────
     const { locale, registry } = detectLocaleAndRegistry();
@@ -213,6 +217,10 @@ export default defineContentScript({
 
       removeOverlay();
       checkKickChannelPage();
+
+      // Pick up list updates for subsequent scans — served from the background
+      // cache, so this only touches the network when the TTL has expired.
+      void loadLists();
 
       setTimeout(scanAndHide, 500);
       setTimeout(scanAndHide, 1500);

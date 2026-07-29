@@ -1,118 +1,107 @@
 export default defineBackground(() => {
   const BASE_URL = 'https://www.nogamblettv.app/api';
-  const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
-  async function fetchBlacklist(): Promise<string[]> {
-    const cached = await chrome.storage.local.get(['blacklist', 'blacklistTs']);
-    const now = Date.now();
-    if (
-      Array.isArray(cached.blacklist) &&
-      typeof cached.blacklistTs === 'number' &&
-      now - cached.blacklistTs < CACHE_TTL_MS
-    ) {
-      return cached.blacklist as string[];
-    }
-    try {
-      const res = await fetch(`${BASE_URL}/blacklist`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const list = (await res.json()) as string[];
-      await chrome.storage.local.set({ blacklist: list, blacklistTs: now });
-      return list;
-    } catch {
-      return Array.isArray(cached.blacklist) ? (cached.blacklist as string[]) : [];
-    }
+  // Client cache TTL is server-tunable: the API sends `x-client-ttl` (seconds)
+  // so refresh cadence can be changed without shipping a new extension version.
+  const DEFAULT_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
+  const MIN_TTL_MS = 5 * 60 * 1000;
+  const MAX_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+  interface ListConfig {
+    endpoint: string;
+    dataKey: string;
+    tsKey: string;
+    ttlKey: string;
   }
 
-  async function fetchKickBlacklist(): Promise<string[]> {
-    const cached = await chrome.storage.local.get(['kickBlacklist', 'kickBlacklistTs']);
-    const now = Date.now();
-    if (
-      Array.isArray(cached.kickBlacklist) &&
-      typeof cached.kickBlacklistTs === 'number' &&
-      now - cached.kickBlacklistTs < CACHE_TTL_MS
-    ) {
-      return cached.kickBlacklist as string[];
-    }
-    try {
-      const res = await fetch(`${BASE_URL}/kicklist`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const list = (await res.json()) as string[];
-      await chrome.storage.local.set({ kickBlacklist: list, kickBlacklistTs: now });
-      return list;
-    } catch {
-      return Array.isArray(cached.kickBlacklist) ? (cached.kickBlacklist as string[]) : [];
-    }
+  // Storage keys predate this refactor — existing users' caches carry over.
+  const LISTS: Record<string, ListConfig> = {
+    GET_BLACKLIST: {
+      endpoint: '/blacklist',
+      dataKey: 'blacklist',
+      tsKey: 'blacklistTs',
+      ttlKey: 'blacklistTtl',
+    },
+    GET_KICK_BLACKLIST: {
+      endpoint: '/kicklist',
+      dataKey: 'kickBlacklist',
+      tsKey: 'kickBlacklistTs',
+      ttlKey: 'kickBlacklistTtl',
+    },
+    GET_CATEGORIES: {
+      endpoint: '/categories',
+      dataKey: 'categories',
+      tsKey: 'categoriesTs',
+      ttlKey: 'categoriesTtl',
+    },
+    GET_KICK_CATEGORIES: {
+      endpoint: '/categories/kick',
+      dataKey: 'kickCategories',
+      tsKey: 'kickCategoriesTs',
+      ttlKey: 'kickCategoriesTtl',
+    },
+  };
+
+  function parseServerTtl(res: Response): number {
+    const seconds = Number(res.headers.get('x-client-ttl'));
+    if (!Number.isFinite(seconds) || seconds <= 0) return DEFAULT_TTL_MS;
+    return Math.min(Math.max(seconds * 1000, MIN_TTL_MS), MAX_TTL_MS);
   }
 
-  async function fetchCategories(): Promise<{ slug: string; name: string }[]> {
-    const cached = await chrome.storage.local.get(['categories', 'categoriesTs']);
-    const now = Date.now();
-    if (
-      Array.isArray(cached.categories) &&
-      typeof cached.categoriesTs === 'number' &&
-      now - cached.categoriesTs < CACHE_TTL_MS
-    ) {
-      return cached.categories as { slug: string; name: string }[];
-    }
-    try {
-      const res = await fetch(`${BASE_URL}/categories`);
+  // One network refresh per list at a time — concurrent callers share it.
+  const inflight = new Map<string, Promise<unknown[]>>();
+
+  function refresh(cfg: ListConfig): Promise<unknown[]> {
+    const existing = inflight.get(cfg.endpoint);
+    if (existing) return existing;
+    const request = (async () => {
+      const res = await fetch(`${BASE_URL}${cfg.endpoint}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const list = (await res.json()) as { slug: string; name: string }[];
-      await chrome.storage.local.set({ categories: list, categoriesTs: now });
+      const list = (await res.json()) as unknown[];
+      if (!Array.isArray(list)) throw new Error('Unexpected response shape');
+      await chrome.storage.local.set({
+        [cfg.dataKey]: list,
+        [cfg.tsKey]: Date.now(),
+        [cfg.ttlKey]: parseServerTtl(res),
+      });
       return list;
-    } catch {
-      return Array.isArray(cached.categories)
-        ? (cached.categories as { slug: string; name: string }[])
-        : [];
-    }
+    })();
+    inflight.set(cfg.endpoint, request);
+    return request.finally(() => inflight.delete(cfg.endpoint));
   }
 
-  async function fetchKickCategories(): Promise<{ slug: string; name: string }[]> {
-    const cached = await chrome.storage.local.get(['kickCategories', 'kickCategoriesTs']);
-    const now = Date.now();
-    if (
-      Array.isArray(cached.kickCategories) &&
-      typeof cached.kickCategoriesTs === 'number' &&
-      now - cached.kickCategoriesTs < CACHE_TTL_MS
-    ) {
-      return cached.kickCategories as { slug: string; name: string }[];
+  // Stale-while-revalidate: always answer from cache when one exists, kicking
+  // off a background refresh once it is older than the TTL. Only block on the
+  // network when there is no cache at all (first run after install).
+  async function getList(cfg: ListConfig): Promise<unknown[]> {
+    const stored = await chrome.storage.local.get([cfg.dataKey, cfg.tsKey, cfg.ttlKey]);
+    const cached = Array.isArray(stored[cfg.dataKey]) ? (stored[cfg.dataKey] as unknown[]) : null;
+    if (cached) {
+      const fetchedAt = typeof stored[cfg.tsKey] === 'number' ? (stored[cfg.tsKey] as number) : 0;
+      const ttl = typeof stored[cfg.ttlKey] === 'number' ? (stored[cfg.ttlKey] as number) : DEFAULT_TTL_MS;
+      if (Date.now() - fetchedAt >= ttl) {
+        refresh(cfg).catch(() => {
+          // Network failed — keep serving the stale copy until the next attempt.
+        });
+      }
+      return cached;
     }
     try {
-      const res = await fetch(`${BASE_URL}/categories/kick`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const list = (await res.json()) as { slug: string; name: string }[];
-      await chrome.storage.local.set({ kickCategories: list, kickCategoriesTs: now });
-      return list;
+      return await refresh(cfg);
     } catch {
-      return Array.isArray(cached.kickCategories)
-        ? (cached.kickCategories as { slug: string; name: string }[])
-        : [];
+      return [];
     }
   }
 
   browser.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-    if (message?.type === 'GET_BLACKLIST') {
-      fetchBlacklist().then(sendResponse);
-      return true;
-    }
-    if (message?.type === 'GET_KICK_BLACKLIST') {
-      fetchKickBlacklist().then(sendResponse);
-      return true;
-    }
-    if (message?.type === 'GET_CATEGORIES') {
-      fetchCategories().then(sendResponse);
-      return true;
-    }
-    if (message?.type === 'GET_KICK_CATEGORIES') {
-      fetchKickCategories().then(sendResponse);
-      return true;
-    }
-    return false;
+    const cfg = typeof message?.type === 'string' ? LISTS[message.type] : undefined;
+    if (!cfg) return false;
+    getList(cfg).then(sendResponse);
+    return true;
   });
 
   // Pre-warm all caches on service worker start
-  fetchBlacklist();
-  fetchKickBlacklist();
-  fetchCategories();
-  fetchKickCategories();
+  for (const cfg of Object.values(LISTS)) {
+    void getList(cfg);
+  }
 });

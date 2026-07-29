@@ -7,28 +7,32 @@ export default defineContentScript({
   matches: ['https://www.twitch.tv/*'],
   runAt: 'document_idle',
   async main() {
-    // ─── Remote blacklist ──────────────────────────────────────────────────────
-    let rawList: string[] = [];
-    try {
-      rawList = (await browser.runtime.sendMessage({ type: 'GET_BLACKLIST' })) as string[];
-    } catch {
-      rawList = [];
-    }
-    const BLACKLIST = new Set(rawList.map((n) => n.toLowerCase()));
+    // ─── Remote blacklist + categories ─────────────────────────────────────────
+    // Loaded once at start, re-requested on SPA navigation. The background
+    // worker answers from its cache instantly and refreshes over the network
+    // only when the server-driven TTL has expired.
+    let BLACKLIST = new Set<string>();
+    let BLOCKED_CATEGORIES = new Map<string, string>();
 
-    // ─── Remote categories ─────────────────────────────────────────────────────
-    let rawCategories: { slug: string; name: string }[] = [];
-    try {
-      rawCategories = (await browser.runtime.sendMessage({ type: 'GET_CATEGORIES' })) as {
-        slug: string;
-        name: string;
-      }[];
-    } catch {
-      rawCategories = [];
+    async function loadLists(): Promise<void> {
+      try {
+        const rawList = (await browser.runtime.sendMessage({ type: 'GET_BLACKLIST' })) as string[];
+        BLACKLIST = new Set(rawList.map((n) => n.toLowerCase()));
+      } catch {
+        // Keep the previous list on failure
+      }
+      try {
+        const rawCategories = (await browser.runtime.sendMessage({ type: 'GET_CATEGORIES' })) as {
+          slug: string;
+          name: string;
+        }[];
+        BLOCKED_CATEGORIES = new Map(rawCategories.map(({ slug, name }) => [slug.toLowerCase(), name]));
+      } catch {
+        // Keep the previous map on failure
+      }
     }
-    const BLOCKED_CATEGORIES = new Map<string, string>(
-      rawCategories.map(({ slug, name }) => [slug.toLowerCase(), name])
-    );
+
+    await loadLists();
 
     // ─── Locale + registry detection ───────────────────────────────────────────
     const { locale, registry } = detectLocaleAndRegistry();
@@ -259,6 +263,10 @@ export default defineContentScript({
 
       removeOverlay();
       checkChannelPage();
+
+      // Pick up list updates for subsequent scans — served from the background
+      // cache, so this only touches the network when the TTL has expired.
+      void loadLists();
 
       setTimeout(scanAndHide, 500);
       setTimeout(scanAndHide, 1500);
